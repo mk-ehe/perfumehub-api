@@ -5,6 +5,7 @@ import re
 from pymongo import MongoClient
 import os
 from urllib.parse import urlparse
+from pydantic import BaseModel
 
 
 load_dotenv()
@@ -101,3 +102,21 @@ def subscribe_price(url: str, email: str):
     )
 
     return {"message": f"We will send price alerts to: {email}"}
+
+class UnsubscribeRequest(BaseModel):
+    url: str
+    email: str
+
+@app.post("/unsubscribe")
+def unsubscribe_price(data: UnsubscribeRequest):
+    valid_url = validate_perfumehub_url(data.url)
+    
+    result = collection.update_one(
+        {"url": valid_url},
+        {"$pull": {"subscribers": data.email.lower()}}
+    )
+
+    if result.modified_count == 0:
+        return {"message": "You were not subscribed to this fragrance."}
+
+    return {"message": f"Success! {data.email} has been unsubscribed from alerts for this product."}
