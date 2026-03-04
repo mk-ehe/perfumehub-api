@@ -21,7 +21,7 @@ def home():
     pass
 
 @app.get("/search_price")
-def get_price():
+def get_price(url: str):
     if not url.startswith(("http://", "https://")):
         url = "https://" + url
 
@@ -38,3 +38,27 @@ def get_price():
     except Exception as e:
         print(f"ERROR: {str(e)}", flush=True)
         raise HTTPException(status_code=400, detail="Malformed URL provided.")
+    
+    try:
+        scraped_data = scraper.get_data(url)
+        
+        db_document = {
+            "url": url,
+            "price": scraped_data.get("price"),
+            "low_30d": scraped_data.get("low_30d"),
+            "shop": scraped_data.get("shop")
+        }
+
+        collection.update_one(
+            {"url": url},
+            {"$set": db_document},
+            upsert=True
+        )
+
+        return scraped_data
+
+    except ConnectionError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        print(f"Scraping error: {str(e)}", flush=True)
+        raise HTTPException(status_code=500, detail="An error occurred while fetching the price.")
