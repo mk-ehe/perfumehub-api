@@ -13,15 +13,11 @@ app = FastAPI()
 scraper = PerfumehubScraper()
 
 client = MongoClient(os.getenv("MONGO_URL"))
-db = client["perfumehub_db"]
+db = client.get_default_database()
 collection = db["prices"]
 
-@app.get("/")
-def home():
-    pass
 
-@app.get("/search_price")
-def get_price(url: str):
+def validate_perfumehub_url(url: str) -> str:
     if not url.startswith(("http://", "https://")):
         url = "https://" + url
 
@@ -33,20 +29,33 @@ def get_price(url: str):
         domain_pattern = r"^(www\.)?perfumehub\.pl$"
         if not re.match(domain_pattern, parsed_url.netloc):
             raise HTTPException(status_code=400, detail="Invalid domain. Only official Perfumehub URLs are allowed.")
+
+        return url
     except HTTPException:
         raise
     except Exception as e:
-        print(f"ERROR: {str(e)}", flush=True)
+        print(f"URL Validation Error: {e}", flush=True)
         raise HTTPException(status_code=400, detail="Malformed URL provided.")
+
+
+@app.get("/")
+def home():
+    pass
+
+@app.get("/search_price")
+def get_price(url: str):
+    url = validate_perfumehub_url(url)
     
     try:
         scraped_data = scraper.get_data(url)
         
         db_document = {
-            "url": url,
+            "fragrance": scraped_data.get("fragrance"),
+            "concentration": scraped_data.get("concentration"),
             "price": scraped_data.get("price"),
             "low_30d": scraped_data.get("low_30d"),
-            "shop": scraped_data.get("shop")
+            "shop": scraped_data.get("shop"),
+            "url": url,
         }
 
         collection.update_one(
@@ -54,11 +63,41 @@ def get_price(url: str):
             {"$set": db_document},
             upsert=True
         )
-
         return scraped_data
-
-    except ConnectionError as e:
-        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
-        print(f"Scraping error: {str(e)}", flush=True)
+        print(f"ERROR: {str(e)}", flush=True)
         raise HTTPException(status_code=500, detail="An error occurred while fetching the price.")
+
+@app.get("/subscribe")
+def subscribe_price(url: str, email: str):
+    url = validate_perfumehub_url(url)
+
+    if not "@" in email:
+        raise HTTPException(status_code=400, detail="Wrong email provided.")
+    
+    product_exists = collection.find_one({"url": url})
+    
+    if not product_exists:  
+        try:
+            scraped_data = scraper.get_data(url)
+            
+            db_document = {
+                "fragrance": scraped_data.get("fragrance"),
+                "concentration": scraped_data.get("concentration"),
+                "price": scraped_data.get("price"),
+                "low_30d": scraped_data.get("low_30d"),
+                "shop": scraped_data.get("shop"),
+                "url": url,
+                "subscribers": []
+            }
+            collection.insert_one(db_document)
+        except Exception as e:
+            print(f"ERROR: {e}", flush=True)
+            raise HTTPException(status_code=400, detail="An error occurred while fetching the price.")
+
+    collection.update_one(
+        {"url": url},
+        {"$addToSet": {"subscribers": email.lower()}}
+    )
+
+    return {"message": f"We will send price alerts to: {email}"}

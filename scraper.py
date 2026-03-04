@@ -59,21 +59,26 @@ class PerfumehubScraper:
     def get_data(self, url):
         tree = self.fetch_page(url)
 
+        brand = self.get_first_or_none(tree, '//*[@id="product-description"]/div[2]/h1/a/text()') or ""
+        name = self.get_first_or_none(tree, '//*[@id="product-description"]/div[2]/h1/span/text()') or ""
+        fragrance = f"{brand} {name}".strip()
+        concetration = self.get_first_or_none(tree, '//*[@id="product-description"]/div[2]/h2/text()')
         price = self.get_first_or_none(tree, '//*[@id="offers-body"]/div[1]/div[3]/a/span[1]/text()')
         low_30d = self.get_first_or_none(tree, '//*[@id="offers-header"]/div[2]/div[1]/span/span/span[4]/text()')
         shop_name = self.get_first_or_none(tree, '//*[@id="offers-body"]/div[1]/div[1]/a/text()')
         raw_shop_url = self.get_first_or_none(tree, '//*[@id="offers-body"]/div[1]/div[1]/a/@href')
 
         data = {
+            "fragrance": fragrance,
+            "concentration": concetration,
             "price": price,
             "low_30d": f"{low_30d} zł" if low_30d else None,
             "shop": {
                 "name": shop_name,
-                "url": self.decode_perfumehub_link(raw_shop_url)
-            }
+                "shop_url": self.decode_perfumehub_link(raw_shop_url)
+            },
+            "url": url
         }    
 
         return data
     
-scraper = PerfumehubScraper()
-print(scraper.get_data('https://perfumehub.pl/dior-sauvage-woda-toaletowa-dla-mezczyzn-100-ml'))
