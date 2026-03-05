@@ -197,3 +197,7 @@ def run_price_checks(token: str = ""):
             print(f"Error while checking: {url}: {e}", flush=True)
 
     return {"message": "Cron check successful"}
+
+@app.get("/ping")
+def ping():
+    return {"status": "ok"}
