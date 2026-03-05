@@ -46,6 +46,7 @@ def guide():
             "/docs",
             "[GET] /search?url={full_url}",
             "[GET] /subscribe?url={full_url}&email={your_email}",
+            "[GET] /cron-check",
             "[GET] /ping",
             "[POST] /unsubscribe (requires JSON body: {'url': '{full_url}', 'email': '{your_email}'})"
         ],
