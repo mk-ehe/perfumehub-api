@@ -43,7 +43,7 @@ def validate_perfumehub_url(url: str) -> str:
 def home():
     pass
 
-@app.get("/search_price")
+@app.get("/search")
 def get_price(url: str):
     url = validate_perfumehub_url(url)
     
