@@ -40,8 +40,17 @@ def validate_perfumehub_url(url: str) -> str:
 
 
 @app.get("/")
-def home():
-    pass
+def guide():
+    return {
+        "routes": [
+            "/docs",
+            "[GET] /search_price?url={full_url}",
+            "[GET] /subscribe?url={full_url}&email={your_email}",
+            "[POST] /unsubscribe (requires JSON body: {'url': '{full_url}', 'email': '{your_email}'})"
+        ],
+        "author": "mk-ehe",
+        "github": "https://github.com/mk-ehe/perfumehub_api"
+        }
 
 @app.get("/search")
 def get_price(url: str):
