@@ -59,6 +59,11 @@ def guide():
 @app.get("/search")
 def get_price(url: str):
     url = validate_perfumehub_url(url)
+
+    existing_product = collection.find_one({"url": url})
+    if existing_product:
+        existing_product.pop("_id", None) 
+        return existing_product
     
     try:
         scraped_data = scraper.get_data(url)
@@ -70,20 +75,19 @@ def get_price(url: str):
             "low_30d": scraped_data.get("low_30d"),
             "shop": scraped_data.get("shop"),
             "url": url,
+            "subscribers": []
         }
 
-        collection.update_one(
-            {"url": url},
-            {"$set": db_document},
-            upsert=True
-        )
-        return scraped_data
+        collection.insert_one(db_document)
+        db_document.pop("_id", None)
+        return db_document
+
     except Exception as e:
         print(f"ERROR: {str(e)}", flush=True)
         raise HTTPException(status_code=500, detail="An error occurred while fetching the price.")
 
 @app.get("/subscribe")
-def subscribe_price(url: str, email: str):
+def subscribe_price(url: str, email: EmailStr):
     url = validate_perfumehub_url(url)
     
     product_exists = collection.find_one({"url": url})
