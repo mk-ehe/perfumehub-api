@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from scraper import PerfumehubScraper   
 from dotenv import load_dotenv
 import re
@@ -7,6 +7,8 @@ import os
 from urllib.parse import urlparse
 from pydantic import BaseModel
 from email_sender import send_price_alert
+import secrets
+from pydantic import EmailStr
 
 
 load_dotenv()
@@ -116,7 +118,7 @@ def subscribe_price(url: str, email: str):
 
 class UnsubscribeRequest(BaseModel):
     url: str
-    email: str
+    email: EmailStr
 
 @app.post("/unsubscribe")
 def unsubscribe_price(data: UnsubscribeRequest):
@@ -144,8 +146,8 @@ def parse_price(price_str: str) -> float:
 @app.get("/cron-check")
 def run_price_checks(token: str = ""):
     expected_token = os.getenv("CRON_SECRET")
-    if not expected_token or token != expected_token:
-        raise HTTPException(status_code=401, detail="Unauthorized!")
+    if not secrets.compare_digest(token, expected_token or ""):
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
     products = collection.find({})
     

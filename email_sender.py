@@ -2,6 +2,8 @@ import smtplib
 from email.message import EmailMessage
 import os
 from dotenv import load_dotenv
+import html
+from urllib.parse import quote
 
 
 load_dotenv()
@@ -11,7 +13,10 @@ def send_price_alert(to_email: str, fragrance_name: str, old_price: str, new_pri
     gmail_password = os.getenv("GMAIL_APP_PASSWORD")
 
     frontend_url = os.getenv("FRONTEND_URL", "#")
-    unsub_link = f"{frontend_url}/unsubscribe?email={to_email}&url={product_url}"
+    safe_name = html.escape(fragrance_name)
+    safe_email = quote(to_email)
+    safe_url = quote(product_url)
+    unsub_link = f"{frontend_url}/unsubscribe?email={safe_email}&url={safe_url}"
 
     msg = EmailMessage()
     msg['Subject'] = f"📉 Spadek ceny: {fragrance_name}!"
@@ -41,7 +46,7 @@ def send_price_alert(to_email: str, fragrance_name: str, old_price: str, new_pri
                                 <h2 style="color: #333333; margin-top: 0; font-size: 24px;">🎉 Mamy świetne wieści! 🎉</h2>
                                 <p style="color: #666666; font-size: 16px; line-height: 1.6; margin-bottom: 24px; margin-top: 22px;">
                                     Cena dla zapachu <br>
-                                    <strong style="color: #1a1a1a; font-size: 18px;"><a href="{product_url}"><u>{fragrance_name}</u></a></strong><br>
+                                    <strong style="color: #1a1a1a; font-size: 18px;"><a href="{product_url}"><u>{safe_name}</u></a></strong><br>
                                     który obserwujesz, właśnie spadła o <strong style="color: #e91010; font-size: 18px;"><u>{price_diff}</u></strong>.
                                     <br>
                                     <b style="font-size: 22px; color: #1a1a1a;">Stara cena: {old_price}</b>
