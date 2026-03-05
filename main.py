@@ -85,9 +85,6 @@ def get_price(url: str):
 @app.get("/subscribe")
 def subscribe_price(url: str, email: str):
     url = validate_perfumehub_url(url)
-
-    if not "@" in email:
-        raise HTTPException(status_code=400, detail="Wrong email provided.")
     
     product_exists = collection.find_one({"url": url})
     
