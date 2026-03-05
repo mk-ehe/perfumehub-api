@@ -55,7 +55,6 @@ class PerfumehubScraper:
             print(f"ERROR: {e}", flush=True)
             return "https://perfumehub.pl" + raw_url
 
-
     def get_data(self, url):
         tree = self.fetch_page(url)
 

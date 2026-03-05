@@ -6,6 +6,7 @@ from pymongo import MongoClient
 import os
 from urllib.parse import urlparse
 from pydantic import BaseModel
+from email_sender import send_price_alert
 
 
 load_dotenv()
@@ -37,7 +38,6 @@ def validate_perfumehub_url(url: str) -> str:
     except Exception as e:
         print(f"URL Validation Error: {e}", flush=True)
         raise HTTPException(status_code=400, detail="Malformed URL provided.")
-
 
 @app.get("/")
 def guide():
@@ -129,3 +129,71 @@ def unsubscribe_price(data: UnsubscribeRequest):
         return {"message": "You were not subscribed to this fragrance."}
 
     return {"message": f"Success! {data.email} has been unsubscribed from alerts for this product."}
+
+def parse_price(price_str: str) -> float:
+    if not price_str:
+        return 0.0
+    clean_str = price_str.replace("zł", "").replace(" ", "").replace(",", ".")
+    try:
+        return float(clean_str)
+    except ValueError:
+        return 0.0
+
+@app.get("/cron-check")
+def run_price_checks(token: str = ""):
+    expected_token = os.getenv("CRON_SECRET")
+    if not expected_token or token != expected_token:
+        raise HTTPException(status_code=401, detail="Unauthorized!")
+
+    products = collection.find({})
+    
+    for product in products:
+        url = product.get("url")
+        subscribers = product.get("subscribers", [])
+        
+        if not subscribers:
+            continue
+            
+        old_price_str = product.get("price")
+        fragrance_name = product.get("fragrance", "Ulubiony zapach")
+        
+        try:
+            scraped_data = scraper.get_data(url)
+            new_price_str = scraped_data.get("price")
+
+            shop_data = scraped_data.get("shop", {})
+            shop_url = shop_data.get("shop_url", url)
+            
+            if not new_price_str or not old_price_str:
+                continue
+            
+            price_diff = parse_price(old_price_str) - parse_price(new_price_str)
+            formatted_diff = f"{price_diff:.2f} zł".replace(".", ",")
+            
+            if price_diff >= 10.00:  
+                for email in subscribers:
+                    send_price_alert(
+                        to_email=email,
+                        fragrance_name=fragrance_name,
+                        old_price=old_price_str,
+                        new_price=new_price_str,
+                        price_diff=formatted_diff,
+                        product_url=url,
+                        shop_url=shop_url
+                    )
+            else:
+                print(f"No promo detected, price difference: {price_diff}")
+
+            collection.update_one(
+                {"_id": product["_id"]}, 
+                {"$set": {
+                    "price": new_price_str,
+                    "low_30d": scraped_data.get("low_30d"),
+                    "shop": scraped_data.get("shop")
+                }}
+            )
+                
+        except Exception as e:
+            print(f"Error while checking: {url}: {e}", flush=True)
+
+    return {"message": "Cron check successful"}
