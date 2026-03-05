@@ -44,7 +44,7 @@ def guide():
     return {
         "routes": [
             "/docs",
-            "[GET] /search_price?url={full_url}",
+            "[GET] /search?url={full_url}",
             "[GET] /subscribe?url={full_url}&email={your_email}",
             "[GET] /ping",
             "[POST] /unsubscribe (requires JSON body: {'url': '{full_url}', 'email': '{your_email}'})"
