@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException
 from scraper import PerfumehubScraper   
 from dotenv import load_dotenv
 import re
