@@ -5,10 +5,9 @@ import re
 from pymongo import MongoClient
 import os
 from urllib.parse import urlparse
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from email_sender import send_price_alert
 import secrets
-from pydantic import EmailStr
 
 
 load_dotenv()
