@@ -62,7 +62,8 @@ def get_price(url: str):
 
     existing_product = collection.find_one({"url": url})
     if existing_product:
-        existing_product.pop("_id", None) 
+        existing_product.pop("_id", None)
+        existing_product.pop("subscribers", None)
         return existing_product
     
     try:
@@ -80,6 +81,7 @@ def get_price(url: str):
 
         collection.insert_one(db_document)
         db_document.pop("_id", None)
+        db_document.pop("subscribers", None)
         return db_document
 
     except Exception as e:
