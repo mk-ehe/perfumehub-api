@@ -118,7 +118,7 @@ def send_confirmation_email(to_email: str, product_url: str, token: str, base_ur
     message["From"] = f"ScentWatch <{sender_email}>" 
     message["To"] = to_email
 
-    html = f"""
+    html_content = f"""
 <!DOCTYPE html>
     <html>
     <head>
@@ -176,7 +176,7 @@ def send_confirmation_email(to_email: str, product_url: str, token: str, base_ur
     </html>
     """
     
-    message.attach(MIMEText(html, "html"))
+    message.attach(MIMEText(html_content, "html"))
 
     try:
         context = ssl.create_default_context()
