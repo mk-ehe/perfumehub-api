@@ -187,8 +187,9 @@ def run_price_checks(token: str = ""):
                         product_url=url,
                         shop_url=shop_url
                     )
+                print(f"{fragrance_name}: Threshold reached! Price difference: {price_diff}")
             else:
-                print(f"No promo detected, price difference: {price_diff}")
+                print(f"{fragrance_name}: threshold not exceeded. Price difference: {price_diff}")
 
             collection.update_one(
                 {"_id": product["_id"]}, 
