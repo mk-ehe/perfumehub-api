@@ -115,7 +115,7 @@ def send_confirmation_email(to_email: str, product_url: str, token: str, base_ur
 
     message = MIMEMultipart("alternative")
     message["Subject"] = "Potwierdź subskrypcję - ScentWatch"
-    message["From"] = sender_email
+    message["From"] = f"ScentWatch <{sender_email}>" 
     message["To"] = to_email
 
     html = f"""
