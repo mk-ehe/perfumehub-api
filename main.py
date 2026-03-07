@@ -6,8 +6,9 @@ from pymongo import MongoClient
 import os
 from urllib.parse import urlparse
 from pydantic import BaseModel, EmailStr
-from email_sender import send_price_alert
+from email_sender import send_price_alert, send_confirmation_email
 import secrets
+from datetime import datetime, timezone
 
 
 load_dotenv()
@@ -18,6 +19,7 @@ scraper = PerfumehubScraper()
 client = MongoClient(os.getenv("MONGO_URL"))
 db = client.get_default_database()
 collection = db["prices"]
+pending_collection = db["pending_subscribers"]
 
 
 def validate_perfumehub_url(url: str) -> str:
@@ -47,7 +49,8 @@ def guide():
             "/docs",
             "[GET] /search?url={full_url}",
             "[GET] /subscribe?url={full_url}&email={your_email}",
-            "[GET] /cron-check",
+            "[GET] /confirm?token={generated_token}"
+            "[GET] /cron-check?token={your_custom_token}",
             "[GET] /ping",
             "[POST] /unsubscribe (requires JSON body: {'url': '{full_url}', 'email': '{your_email}'})"
         ],
@@ -90,13 +93,16 @@ def get_price(url: str):
 @app.get("/subscribe")
 def subscribe_price(url: str, email: EmailStr):
     url = validate_perfumehub_url(url)
+    email_lower = email.lower()
     
+    fragrance_name = ""
+    concentration = ""
+
     product_exists = collection.find_one({"url": url})
     
     if not product_exists:  
         try:
             scraped_data = scraper.get_data(url)
-            
             db_document = {
                 "fragrance": scraped_data.get("fragrance"),
                 "concentration": scraped_data.get("concentration"),
@@ -106,17 +112,52 @@ def subscribe_price(url: str, email: EmailStr):
                 "url": url,
                 "subscribers": []
             }
+            fragrance_name = scraped_data.get("fragrance")
+            concentration = scraped_data.get("concentration")
             collection.insert_one(db_document)
         except Exception as e:
             print(f"ERROR: {e}", flush=True)
             raise HTTPException(status_code=400, detail="An error occurred while fetching the price.")
+    elif product_exists:
+        fragrance_name = product_exists.get("fragrance")
+        concentration = product_exists.get("concentration")
+
+    token = secrets.token_urlsafe(16)
+
+    pending_collection.insert_one({
+        "fragrance": fragrance_name,
+        "concentration": concentration,
+        "email": email_lower,
+        "url": url,
+        "token": token,
+        "created_at": datetime.now(timezone.utc)
+    })
+
+    base_url = os.getenv("API_BASE_URL", "https://perfumehub-api.onrender.com")
+    
+    send_confirmation_email(email_lower, url, token, base_url, fragrance_name)
+
+    return {"message": f"Verification email sent to: {email_lower}. Check your inbox!"}
+
+@app.get("/confirm")
+def confirm_subscription(token: str):
+    pending_doc = pending_collection.find_one({"token": token})
+    
+    if not pending_doc:
+        raise HTTPException(status_code=400, detail="Incorrect or expired token.")
+        
+    url = pending_doc["url"]
+    email = pending_doc["email"]
+    fragrance = pending_doc["fragrance"]
 
     collection.update_one(
         {"url": url},
-        {"$addToSet": {"subscribers": email.lower()}}
+        {"$addToSet": {"subscribers": email}}
     )
 
-    return {"message": f"We will send price alerts to: {email}"}
+    pending_collection.delete_one({"_id": pending_doc["_id"]})
+
+    return {"message": f"E-mail confirmed. You will receive promotion alerts on: {email.lower()} about {fragrance}."}
 
 class UnsubscribeRequest(BaseModel):
     url: str
@@ -176,6 +217,14 @@ def run_price_checks(token: str = ""):
             price_diff = parse_price(old_price_str) - parse_price(new_price_str)
             formatted_diff = f"{price_diff:.2f} zł".replace(".", ",")
             
+            update_doc= {
+                    "$set": {
+                        "price": new_price_str,
+                        "low_30d": scraped_data.get("low_30d"),
+                        "shop": scraped_data.get("shop")
+                    }
+                }
+
             if price_diff >= 10.00:  
                 for email in subscribers:
                     send_price_alert(
@@ -187,18 +236,13 @@ def run_price_checks(token: str = ""):
                         product_url=url,
                         shop_url=shop_url
                     )
+                
+                update_doc["$inc"] = {"emails_sent": len(subscribers)}
                 print(f"{fragrance_name}: Threshold reached! Price difference: {price_diff}")
             else:
                 print(f"{fragrance_name}: threshold not exceeded. Price difference: {price_diff}")
 
-            collection.update_one(
-                {"_id": product["_id"]}, 
-                {"$set": {
-                    "price": new_price_str,
-                    "low_30d": scraped_data.get("low_30d"),
-                    "shop": scraped_data.get("shop")
-                }}
-            )
+            collection.update_one({"_id": product["_id"]}, update_doc)
                 
         except Exception as e:
             print(f"Error while checking: {url}: {e}", flush=True)

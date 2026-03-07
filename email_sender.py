@@ -4,6 +4,9 @@ import os
 from dotenv import load_dotenv
 import html
 from urllib.parse import quote
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import ssl
 
 
 load_dotenv()
@@ -33,7 +36,7 @@ def send_price_alert(to_email: str, fragrance_name: str, old_price: str, new_pri
         <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f4f5f7; padding: 40px 0;">
             <tr>
                 <td align="center">
-                    <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                    <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #e4e4e4">
                         
                         <tr>
                             <td align="center" style="background-color: #0084ff; padding: 25px 20px;">
@@ -94,8 +97,91 @@ def send_price_alert(to_email: str, fragrance_name: str, old_price: str, new_pri
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
             smtp.login(gmail_address, gmail_password)
             smtp.send_message(msg)
-        print(f"EMAIL SENT SUCCESSFULLY TO {to_email}", flush=True)
+        print(f"E-mail sent successfully to {to_email}", flush=True)
         return True
     except Exception as e:
-        print(f"ERROR WHILE SENDING EMAIL: {e}", flush=True)
+        print(f"Error while sending e-mail to: {to_email}: {e}", flush=True)
         return False
+
+def send_confirmation_email(to_email: str, product_url: str, token: str, base_url: str, fragrance_name: str):
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 465
+    sender_email = os.getenv("GMAIL_ADDRESS")
+    sender_password = os.getenv("GMAIL_APP_PASSWORD")
+
+    safe_name = html.escape(fragrance_name)
+    safe_url = quote(product_url)
+    confirm_link = f"{base_url}/confirm?token={token}"
+
+    message = MIMEMultipart("alternative")
+    message["Subject"] = "Potwierdź subskrypcję - ScentWatch"
+    message["From"] = sender_email
+    message["To"] = to_email
+
+    html = f"""
+<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f4f5f7; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f4f5f7; padding: 40px 0;">
+            <tr>
+                <td align="center">
+                    <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #e4e4e4">
+                        
+                        <tr>
+                            <td align="center" style="background-color: #0084ff; padding: 25px 20px;">
+                                <h1 style="color: #ffffff; margin: 0; font-size: 32px; letter-spacing: 1px;">ScentWatch</h1>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td align="center" style="padding: 40px 30px;">
+                                <h2 style="color: #333333; margin-top: 0; font-size: 24px;">📩 Prawie gotowe! 📩</h2>
+                                <p style="color: #666666; font-size: 16px; line-height: 1.6; margin-bottom: 22px; margin-top: 22px;">
+                                    Ktoś (mamy nadzieję, że Ty) poprosił o powiadomienia o spadku ceny dla zapachu: <br>
+                                    <strong style="color: #1a1a1a; font-size: 18px;"><a href="{safe_url}"><u>{safe_name}</u></a></strong>
+                                </p>
+
+                                <p style="color: #666666; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+                                    Aby potwierdzić swój adres e-mail i zacząć oszczędzać, kliknij w poniższy przycisk:
+                                </p>
+
+                                <table border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 10px;">
+                                    <tr>
+                                        <td align="center" style="background-color: #0fc74d; border-radius: 6px;">
+                                            <a href="{confirm_link}" target="_blank" style="display: inline-block; padding: 16px 35px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold; border-radius: 6px;">
+                                                Potwierdzam subskrypcję
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td align="center" style="background-color: #f8f9fa; padding: 20px; border-top: 1px solid #eeeeee;">
+                                <p style="color: #999999; font-size: 12px; margin: 0; line-height: 1.5;">
+                                    Jeśli to nie Ty prosiłeś o powiadomienia, zignoruj tę wiadomość.<br>
+                                    Wiadomość wygenerowana automatycznie przez ScentWatch.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
+    """
+    
+    message.attach(MIMEText(html, "html"))
+
+    try:
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL(smtp_server, smtp_port, context=context) as server:
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, to_email, message.as_string())
+    except Exception as e:
+        print(f"Error sending confirmation email to {to_email}: {e}")
