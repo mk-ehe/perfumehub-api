@@ -112,8 +112,6 @@ def send_price_alert(to_email: str, fragrance_name: str, old_price: str, new_pri
         return False
 
 def send_confirmation_email(to_email: str, product_url: str, token: str, base_url: str, fragrance_name: str):
-    smtp_server = "smtp.gmail.com"
-    smtp_port = 465
     sender_email = os.getenv("GMAIL_ADDRESS")
     sender_password = os.getenv("GMAIL_APP_PASSWORD")
 
@@ -187,9 +185,10 @@ def send_confirmation_email(to_email: str, product_url: str, token: str, base_ur
     message.attach(MIMEText(html_content, "html"))
 
     try:
-        context = ssl.create_default_context()
-        with smtplib.SMTP_SSL(smtp_server, smtp_port, context=context) as server:
-            server.login(sender_email, sender_password)
-            server.sendmail(sender_email, to_email, message.as_string())
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+            smtp.login(sender_email, sender_password)
+            smtp.sendmail(sender_email, to_email, message.as_string())
+            
+        print(f"E-mail sent successfully to {to_email}", flush=True)
     except Exception as e:
-        print(f"Error sending confirmation email to {to_email}: {e}")
+        print(f"Error while sending e-mail to: {to_email}: {e}", flush=True)
