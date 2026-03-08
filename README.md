@@ -22,7 +22,7 @@ A high-performance price tracking and notification engine for fragrances, built 
 | **Framework** | FastAPI |
 | **Database** | MongoDB Atlas |
 | **Deployment** | Render.com |
-| **Mailing** | Gmail SMTP |
+| **Mailing** | Gmail API |
 
 ---
 
