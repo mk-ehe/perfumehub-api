@@ -131,7 +131,7 @@ def subscribe_price(url: str, email: EmailStr):
         "url": url,
         "token": token,
         "created_at": datetime.now(timezone.utc)
-    })
+    })  
 
     base_url = os.getenv("API_BASE_URL", "https://perfumehub-api.onrender.com")
     
