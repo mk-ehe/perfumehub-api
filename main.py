@@ -100,6 +100,13 @@ def subscribe_price(url: str, email: EmailStr, background_tasks: BackgroundTasks
 
     product_exists = collection.find_one({"url": url})
     
+    if product_exists and email_lower in product_exists.get("subscribers", []):
+        return {"message": f"You are already subscribed to this fragrance."}
+    
+    pending_exists = pending_collection.find_one({"url": url, "email": email_lower})
+    if pending_exists:
+        return {"message": "Verification e-mail has already been sent to your Inbox!"}
+    
     if not product_exists:  
         try:
             scraped_data = scraper.get_data(url)
@@ -247,7 +254,7 @@ def run_price_checks(token: str = ""):
                 update_doc["$inc"] = {"emails_sent": len(subscribers)}
                 print(f"{fragrance_name}: Threshold reached! Price difference: {price_diff}", flush=True)
             else:
-                print(f"{fragrance_name}: threshold not exceeded. Price difference: {price_diff}", flush=True)
+                print(f"{fragrance_name}: Threshold not exceeded. Price difference: {price_diff}", flush=True)
 
             collection.update_one({"_id": product["_id"]}, update_doc)
                 
