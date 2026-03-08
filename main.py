@@ -214,8 +214,15 @@ def run_price_checks(token: str = ""):
             if not new_price_str or not old_price_str:
                 continue
             
-            price_diff = parse_price(old_price_str) - parse_price(new_price_str)
+            old_p = parse_price(old_price_str)
+            new_p = parse_price(new_price_str)
+            
+            if old_p <= 0: continue
+
+            price_diff = old_p - new_p
             formatted_diff = f"{price_diff:.2f} zł".replace(".", ",")
+
+            percentage = 10 <= (1 - new_p / old_p) * 100
             
             update_doc= {
                     "$set": {
@@ -225,7 +232,7 @@ def run_price_checks(token: str = ""):
                     }
                 }
 
-            if price_diff >= 10.00:  
+            if price_diff >= 5.00 and percentage:  
                 for email in subscribers:
                     send_price_alert(
                         to_email=email,
@@ -238,9 +245,9 @@ def run_price_checks(token: str = ""):
                     )
                 
                 update_doc["$inc"] = {"emails_sent": len(subscribers)}
-                print(f"{fragrance_name}: Threshold reached! Price difference: {price_diff}")
+                print(f"{fragrance_name}: Threshold reached! Price difference: {price_diff}", flush=True)
             else:
-                print(f"{fragrance_name}: threshold not exceeded. Price difference: {price_diff}")
+                print(f"{fragrance_name}: threshold not exceeded. Price difference: {price_diff}", flush=True)
 
             collection.update_one({"_id": product["_id"]}, update_doc)
                 
