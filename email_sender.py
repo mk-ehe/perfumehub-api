@@ -4,18 +4,7 @@ import os
 from dotenv import load_dotenv
 import html
 from urllib.parse import quote
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-import ssl
-import socket
 
-orig_getaddrinfo = socket.getaddrinfo
-
-def getaddrinfo_ipv4(*args, **kwargs):
-    responses = orig_getaddrinfo(*args, **kwargs)
-    return [res for res in responses if res[0] == socket.AF_INET]
-
-socket.getaddrinfo = getaddrinfo_ipv4
 
 load_dotenv()
 
@@ -119,13 +108,13 @@ def send_confirmation_email(to_email: str, product_url: str, token: str, base_ur
     safe_url = quote(product_url)
     confirm_link = f"{base_url}/confirm?token={token}"
 
-    message = MIMEMultipart("alternative")
-    message["Subject"] = "Potwierdź subskrypcję - ScentWatch"
-    message["From"] = f"ScentWatch <{sender_email}>" 
-    message["To"] = to_email
+    msg = EmailMessage()
+    msg['Subject'] = "Potwierdź subskrypcję - ScentWatch"
+    msg['From'] = f"ScentWatch <{sender_email}>" 
+    msg['To'] = to_email
 
     html_content = f"""
-<!DOCTYPE html>
+    <!DOCTYPE html>
     <html>
     <head>
         <meta charset="utf-8">
@@ -182,13 +171,15 @@ def send_confirmation_email(to_email: str, product_url: str, token: str, base_ur
     </html>
     """
     
-    message.attach(MIMEText(html_content, "html"))
+    msg.add_alternative(html_content, subtype='html')
 
     try:
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
             smtp.login(sender_email, sender_password)
-            smtp.sendmail(sender_email, to_email, message.as_string())
+            smtp.send_message(msg)
             
-        print(f"E-mail sent successfully to {to_email}", flush=True)
+        print(f"Confirmation e-mail sent successfully to {to_email}", flush=True)
+        return True
     except Exception as e:
-        print(f"Error while sending e-mail to: {to_email}: {e}", flush=True)
+        print(f"Error while sending confirmation e-mail to: {to_email}: {e}", flush=True)
+        return False
