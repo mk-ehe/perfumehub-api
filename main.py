@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 from pydantic import BaseModel, EmailStr
 from email_sender import send_price_alert, send_confirmation_email
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 
 load_dotenv()
@@ -198,6 +198,11 @@ def run_price_checks(token: str = ""):
     expected_token = os.getenv("CRON_SECRET")
     if not secrets.compare_digest(token, expected_token or ""):
         raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    cutoff_time = datetime.now(timezone.utc) - timedelta(hours=6)
+    deleted_result = pending_collection.delete_many({"created_at": {"$lt": cutoff_time}})
+    if deleted_result.deleted_count > 0:
+        print(f"Deleted {deleted_result.deleted_count} expired pending verification e-mails.", flush=True)
 
     products = collection.find({})
     
