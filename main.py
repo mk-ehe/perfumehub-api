@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from scraper import PerfumehubScraper   
 from dotenv import load_dotenv
 import re
@@ -91,7 +91,7 @@ def get_price(url: str):
         raise HTTPException(status_code=500, detail="An error occurred while fetching the price.")
 
 @app.get("/subscribe")
-def subscribe_price(url: str, email: EmailStr):
+def subscribe_price(url: str, email: EmailStr, background_tasks: BackgroundTasks):
     url = validate_perfumehub_url(url)
     email_lower = email.lower()
     
@@ -135,7 +135,7 @@ def subscribe_price(url: str, email: EmailStr):
 
     base_url = os.getenv("API_BASE_URL", "https://perfumehub-api.onrender.com")
     
-    send_confirmation_email(email_lower, url, token, base_url, fragrance_name)
+    background_tasks.add_task(send_confirmation_email, email_lower, url, token, base_url, fragrance_name)
 
     return {"message": f"Verification email sent to: {email_lower}. Check your inbox!"}
 

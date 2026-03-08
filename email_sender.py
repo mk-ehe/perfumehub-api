@@ -1,16 +1,40 @@
-import smtplib
-from email.message import EmailMessage
 import os
-from dotenv import load_dotenv
+import base64
+import json
 import html
 from urllib.parse import quote
+from email.message import EmailMessage
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+from dotenv import load_dotenv
 
 
 load_dotenv()
 
+def get_gmail_service():
+    token_data = os.getenv("GMAIL_TOKEN_JSON")
+    
+    if token_data:
+        creds_info = json.loads(token_data)
+        creds = Credentials.from_authorized_user_info(creds_info)
+    elif os.path.exists('token.json'):
+        creds = Credentials.from_authorized_user_file('token.json')
+    else:
+        raise Exception("Brak autoryzacji! Wygeneruj token.json lub ustaw zmienną GMAIL_TOKEN_JSON")
+
+    return build('gmail', 'v1', credentials=creds)
+
+def send_via_api(message_object):
+    service = get_gmail_service()
+    encoded_message = base64.urlsafe_b64encode(message_object.as_bytes()).decode()
+    create_message = {'raw': encoded_message}
+    
+    send_message = service.users().messages().send(userId="me", body=create_message).execute()
+    return send_message
+
 def send_price_alert(to_email: str, fragrance_name: str, old_price: str, new_price: str, price_diff: str, product_url: str, shop_url: str):
     gmail_address = os.getenv("GMAIL_ADDRESS")
-    gmail_password = os.getenv("GMAIL_APP_PASSWORD")
 
     frontend_url = os.getenv("FRONTEND_URL", "#")
     safe_name = html.escape(fragrance_name)
@@ -91,9 +115,7 @@ def send_price_alert(to_email: str, fragrance_name: str, old_price: str, new_pri
     msg.add_alternative(body, subtype='html')
 
     try:
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-            smtp.login(gmail_address, gmail_password)
-            smtp.send_message(msg)
+        send_via_api(msg)
         print(f"E-mail sent successfully to {to_email}", flush=True)
         return True
     except Exception as e:
@@ -102,7 +124,6 @@ def send_price_alert(to_email: str, fragrance_name: str, old_price: str, new_pri
 
 def send_confirmation_email(to_email: str, product_url: str, token: str, base_url: str, fragrance_name: str):
     sender_email = os.getenv("GMAIL_ADDRESS")
-    sender_password = os.getenv("GMAIL_APP_PASSWORD")
 
     safe_name = html.escape(fragrance_name)
     safe_url = quote(product_url)
@@ -174,10 +195,7 @@ def send_confirmation_email(to_email: str, product_url: str, token: str, base_ur
     msg.add_alternative(html_content, subtype='html')
 
     try:
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-            smtp.login(sender_email, sender_password)
-            smtp.send_message(msg)
-            
+        send_via_api(msg)
         print(f"Confirmation e-mail sent successfully to {to_email}", flush=True)
         return True
     except Exception as e:
