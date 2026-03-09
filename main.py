@@ -231,7 +231,7 @@ def run_price_checks(token: str = ""):
             
             if old_p <= 0: continue
 
-            price_diff = old_p - new_p
+            price_diff = round(old_p - new_p, 2)
             formatted_diff = f"{price_diff:.2f} zł".replace(".", ",")
 
             percentage = 10 <= (1 - new_p / old_p) * 100
