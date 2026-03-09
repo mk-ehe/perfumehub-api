@@ -193,17 +193,11 @@ def parse_price(price_str: str) -> float:
     except ValueError:
         return 0.0
 
-@app.get("/cron-check")
-def run_price_checks(token: str = ""):
-    expected_token = os.getenv("CRON_SECRET")
-    if not secrets.compare_digest(token, expected_token or ""):
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    
+def process_all_prices():
     cutoff_time = datetime.now(timezone.utc) - timedelta(hours=6)
-    deleted_result = pending_collection.delete_many({"created_at": {"$lt": cutoff_time}})
-    if deleted_result.deleted_count > 0:
-        print(f"Deleted {deleted_result.deleted_count} expired pending verification e-mails.", flush=True)
+    pending_collection.delete_many({"created_at": {"$lt": cutoff_time}})
 
+    products = collection.find({})
     products = collection.find({})
     
     for product in products:
@@ -269,7 +263,17 @@ def run_price_checks(token: str = ""):
         except Exception as e:
             print(f"Error while checking: {url}: {e}", flush=True)
 
-    return {"message": "Cron check successful"}
+    return {"message": "Cron check completed."}
+
+@app.get("/cron-check")
+def run_price_checks(background_tasks: BackgroundTasks, token: str = ""):
+    expected_token = os.getenv("CRON_SECRET")
+    if not secrets.compare_digest(token, expected_token or ""):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    background_tasks.add_task(process_all_prices)
+
+    return {"message": "Cron check started."}
 
 @app.get("/ping")
 def ping():
