@@ -220,6 +220,8 @@ def run_price_checks(token: str = ""):
             scraped_data = scraper.get_data(url)
             new_price_str = scraped_data.get("price")
 
+            low_30d = scraped_data.get("low_30d") or "Brak"
+
             shop_data = scraped_data.get("shop", {})
             shop_url = shop_data.get("shop_url", url)
             
@@ -252,6 +254,7 @@ def run_price_checks(token: str = ""):
                         old_price=old_price_str,
                         new_price=new_price_str,
                         price_diff=formatted_diff,
+                        low_30d=low_30d,
                         product_url=url,
                         shop_url=shop_url
                     )

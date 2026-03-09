@@ -33,7 +33,7 @@ def send_via_api(message_object):
     send_message = service.users().messages().send(userId="me", body=create_message).execute()
     return send_message
 
-def send_price_alert(to_email: str, fragrance_name: str, old_price: str, new_price: str, price_diff: str, product_url: str, shop_url: str):
+def send_price_alert(to_email: str, fragrance_name: str, old_price: str, new_price: str, price_diff: str, low_30d: str, product_url: str, shop_url: str):
     gmail_address = os.getenv("GMAIL_ADDRESS")
 
     frontend_url = os.getenv("FRONTEND_URL", "#")
@@ -66,16 +66,16 @@ def send_price_alert(to_email: str, fragrance_name: str, old_price: str, new_pri
                         </tr>
 
                         <tr>
-                            <td align="center" style="padding: 40px 30px;">
-                                <h2 style="color: #333333; margin-top: 0; font-size: 24px;">🎉 Świetne wieści! 🎉</h2>
-                                <p style="color: #666666; font-size: 16px; line-height: 1.6; margin-bottom: 24px; margin-top: 22px;">
+                            <td align="center" style="padding: 28px 28px;">
+                                <h2 style="color: #333333; margin: 0; font-size: 28px;">🎉 Świetne wieści! 🎉</h2>
+                                <p style="color: #666666; font-size: 16px; line-height: 1.6; margin-bottom: 10px; margin-top: 22px;">
                                     Cena dla zapachu <br>
                                     <strong style="color: #1a1a1a; font-size: 18px;"><a href="{product_url}"><u>{safe_name}</u></a></strong><br>
                                     który obserwujesz, właśnie spadła o <strong style="color: #e91010; font-size: 18px;"><u>{price_diff}</u></strong>.
-                                    <br>
-                                    <b style="font-size: 22px; color: #1a1a1a;">Stara cena: {old_price}</b>
                                 </p>
-                                <table border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 30px; width: 80%;">
+                                <b style="font-size: 22px; color: #1a1a1a; ;">Stara cena: {old_price}</b>
+
+                                <table border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 10px; margin-top: 15px; width: 80%;">
                                     <tr>
                                         <td align="center" style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px 25px 25px 25px;">
                                             <p style="margin: 10px 0 0 0; color: #888888; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Nowa cena</p>
@@ -86,7 +86,12 @@ def send_price_alert(to_email: str, fragrance_name: str, old_price: str, new_pri
 
                                 <table border="0" cellspacing="0" cellpadding="0">
                                     <tr>
-                                        <td align="center" style="background-color: #0084ff; border-radius: 6px;">
+                                        <td align="center" style="padding-bottom: 28px;">
+                                            <p style="color: #999999; font-size: 12px; margin: 0;">
+                                                Najniższa cena sprzed 30 dni: {low_30d}.</p>
+                                    </tr>
+                                    <tr>
+                                        <td align="center" style="background-color: #0084ff; border-radius: 8px;">
                                             <a href="{shop_url}" target="_blank" style="display: inline-block; padding: 16px 35px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold; border-radius: 6px;">
                                                 Zobacz ofertę
                                             </a>
@@ -95,9 +100,9 @@ def send_price_alert(to_email: str, fragrance_name: str, old_price: str, new_pri
                                 </table>
                             </td>
                         </tr>
-
+                        
                         <tr>
-                            <td align="center" style="background-color: #f8f9fa; padding: 20px; border-top: 1px solid #eeeeee;">
+                            <td align="center" style="background-color: #f8f9fa; padding: 25px; border-top: 1px solid #eeeeee;">
                                 <p style="color: #999999; font-size: 12px; margin: 0; line-height: 1.5;">
                                     Wiadomość wygenerowana automatycznie przez ScentWatch.<br>
                                     Jeśli nie chcesz już śledzić tego zapachu, możesz się <a href="{unsub_link}" style="color: #4b4b4b; text-decoration: underline;">wypisać z powiadomień</a>.
