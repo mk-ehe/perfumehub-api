@@ -129,6 +129,15 @@ def subscribe_price(url: str, email: EmailStr, background_tasks: BackgroundTasks
         fragrance_name = product_exists.get("fragrance")
         concentration = product_exists.get("concentration")
 
+        try:
+            update_data = scraper.get_data(url)
+            collection.update_one(
+                {"url": url},
+                {"$set": {"price": update_data.get("price")}}
+            )
+        except Exception:
+            pass
+
     token = secrets.token_urlsafe(16)
 
     pending_collection.insert_one({
