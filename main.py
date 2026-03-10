@@ -229,6 +229,7 @@ def process_all_prices():
             shop_url = shop_data.get("shop_url") or url
             if not shop_url.startswith(("http://", "https://")):
                 shop_url = url
+                shop_data["shop_url"] = shop_url
             
             if not new_price_str or not old_price_str:
                 continue
