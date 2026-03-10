@@ -120,10 +120,10 @@ def send_price_alert(to_email: str, fragrance_name: str, old_price: str, new_pri
 
     try:
         send_via_api(msg)
-        print(f"E-mail sent successfully to {to_email}", flush=True)
+        print(f"INFO: E-mail sent successfully to {to_email} about {fragrance_name}", flush=True)
         return True
     except Exception as e:
-        print(f"Error while sending e-mail to: {to_email}: {e}", flush=True)
+        print(f"INFO: Error while sending e-mail to: {to_email} about {fragrance_name}: {e}", flush=True)
         return False
 
 def send_confirmation_email(to_email: str, product_url: str, token: str, base_url: str, fragrance_name: str):
@@ -139,7 +139,7 @@ def send_confirmation_email(to_email: str, product_url: str, token: str, base_ur
     msg['To'] = to_email
 
     html_content = f"""
-    <!DOCTYPE html>
+<!DOCTYPE html>
     <html>
     <head>
         <meta charset="utf-8">
@@ -200,8 +200,8 @@ def send_confirmation_email(to_email: str, product_url: str, token: str, base_ur
 
     try:
         send_via_api(msg)
-        print(f"Confirmation e-mail sent successfully to {to_email}", flush=True)
+        print(f"INFO: Confirmation e-mail sent successfully to {to_email} about {fragrance_name}", flush=True)
         return True
     except Exception as e:
-        print(f"Error while sending confirmation e-mail to: {to_email}: {e}", flush=True)
+        print(f"INFO: Error while sending confirmation e-mail to: {to_email} about {fragrance_name}: {e}", flush=True)
         return False

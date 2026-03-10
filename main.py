@@ -225,7 +225,10 @@ def process_all_prices():
             low_30d = scraped_data.get("low_30d") or "Brak"
 
             shop_data = scraped_data.get("shop", {})
+
             shop_url = shop_data.get("shop_url") or url
+            if not shop_url.startswith(("http://", "https://")):
+                shop_url = url
             
             if not new_price_str or not old_price_str:
                 continue
@@ -276,7 +279,6 @@ def process_all_prices():
             print(f"Error while checking: {url}: {e}", flush=True)
 
     print("INFO: Cron check completed")
-    return {"message": "Cron check completed."}
 
 @app.get("/cron-check")
 def run_price_checks(background_tasks: BackgroundTasks, token: str = ""):
