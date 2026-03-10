@@ -207,7 +207,6 @@ def process_all_prices():
     pending_collection.delete_many({"created_at": {"$lt": cutoff_time}})
 
     products = collection.find({})
-    products = collection.find({})
     
     for product in products:
         url = product.get("url")
@@ -240,16 +239,20 @@ def process_all_prices():
             formatted_diff = f"{price_diff:.2f} zł".replace(".", ",")
 
             percentage = 10 <= (1 - new_p / old_p) * 100
+            is_good_deal = price_diff >= 5.00 and percentage
+            price_went_up = new_p > old_p
             
-            update_doc= {
-                    "$set": {
-                        "price": new_price_str,
-                        "low_30d": scraped_data.get("low_30d"),
-                        "shop": scraped_data.get("shop")
-                    }
-                }
+            set_fields = {
+                "low_30d": low_30d,
+                "shop": shop_data
+            }
 
-            if price_diff >= 5.00 and percentage:  
+            if is_good_deal or price_went_up:
+                set_fields["price"] = new_price_str
+
+            update_doc = {"$set": set_fields}
+
+            if is_good_deal:  
                 for email in subscribers:
                     send_price_alert(
                         to_email=email,
@@ -272,6 +275,7 @@ def process_all_prices():
         except Exception as e:
             print(f"Error while checking: {url}: {e}", flush=True)
 
+    print("INFO: Cron check completed")
     return {"message": "Cron check completed."}
 
 @app.get("/cron-check")
@@ -282,6 +286,7 @@ def run_price_checks(background_tasks: BackgroundTasks, token: str = ""):
 
     background_tasks.add_task(process_all_prices)
 
+    print("INFO: Cron check started.")
     return {"message": "Cron check started."}
 
 @app.get("/ping")
