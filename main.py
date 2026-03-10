@@ -74,6 +74,7 @@ def get_price(url: str):
         db_document = {
             "fragrance": scraped_data.get("fragrance"),
             "concentration": scraped_data.get("concentration"),
+            "picture": scraped_data.get("picture"),
             "price": scraped_data.get("price"),
             "low_30d": scraped_data.get("low_30d"),
             "shop": scraped_data.get("shop"),
@@ -97,6 +98,7 @@ def subscribe_price(url: str, email: EmailStr, background_tasks: BackgroundTasks
     
     fragrance_name = ""
     concentration = ""
+    picture = ""
 
     product_exists = collection.find_one({"url": url})
     
@@ -113,14 +115,17 @@ def subscribe_price(url: str, email: EmailStr, background_tasks: BackgroundTasks
             db_document = {
                 "fragrance": scraped_data.get("fragrance"),
                 "concentration": scraped_data.get("concentration"),
+                "picture": scraped_data.get("picture"),
                 "price": scraped_data.get("price"),
                 "low_30d": scraped_data.get("low_30d"),
                 "shop": scraped_data.get("shop"),
                 "url": url,
                 "subscribers": []
             }
-            fragrance_name = scraped_data.get("fragrance")
-            concentration = scraped_data.get("concentration")
+            fragrance_name = db_document["fragrance"]
+            concentration = db_document["concentration"]
+            picture = db_document["picture"]
+            
             collection.insert_one(db_document)
         except Exception as e:
             print(f"ERROR: {e}", flush=True)
@@ -128,12 +133,20 @@ def subscribe_price(url: str, email: EmailStr, background_tasks: BackgroundTasks
     elif product_exists:
         fragrance_name = product_exists.get("fragrance")
         concentration = product_exists.get("concentration")
+        picture = product_exists.get("picture")
 
         try:
             update_data = scraper.get_data(url)
+            update_fields = {"price": update_data.get("price")}
+
+            new_picture = update_data.get("picture")
+            if new_picture:
+                update_fields["picture"] = new_picture
+                picture = new_picture
+
             collection.update_one(
                 {"url": url},
-                {"$set": {"price": update_data.get("price")}}
+                {"$set": update_fields}
             )
         except Exception:
             pass
@@ -151,7 +164,7 @@ def subscribe_price(url: str, email: EmailStr, background_tasks: BackgroundTasks
 
     base_url = os.getenv("API_BASE_URL", "https://perfumehub-api.onrender.com")
     
-    background_tasks.add_task(send_confirmation_email, email_lower, url, token, base_url, fragrance_name)
+    background_tasks.add_task(send_confirmation_email, email_lower, url, picture, token, base_url, fragrance_name)
 
     return {"message": f"Verification email sent to: {email_lower}. Check your inbox!"}
 
@@ -217,6 +230,7 @@ def process_all_prices():
             
         old_price_str = product.get("price")
         fragrance_name = product.get("fragrance", "Ulubiony zapach")
+        picture = product.get("picture")
         
         try:
             scraped_data = scraper.get_data(url)
@@ -251,6 +265,11 @@ def process_all_prices():
                 "shop": shop_data
             }
 
+            new_picture = scraped_data.get("picture")
+            if new_picture:
+                set_fields["picture"] = new_picture
+                picture = new_picture
+
             if is_good_deal or price_went_up:
                 set_fields["price"] = new_price_str
 
@@ -261,6 +280,7 @@ def process_all_prices():
                     send_price_alert(
                         to_email=email,
                         fragrance_name=fragrance_name,
+                        picture=picture,
                         old_price=old_price_str,
                         new_price=new_price_str,
                         price_diff=formatted_diff,

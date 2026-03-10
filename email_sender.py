@@ -32,7 +32,7 @@ def send_via_api(message_object):
     send_message = service.users().messages().send(userId="me", body=create_message).execute()
     return send_message
 
-def send_price_alert(to_email: str, fragrance_name: str, old_price: str, new_price: str, price_diff: str, low_30d: str, product_url: str, shop_url: str):
+def send_price_alert(to_email: str, fragrance_name: str, picture: str, old_price: str, new_price: str, price_diff: str, low_30d: str, product_url: str, shop_url: str):
     gmail_address = os.getenv("GMAIL_ADDRESS")
 
     frontend_url = os.getenv("FRONTEND_URL", "#")
@@ -40,6 +40,10 @@ def send_price_alert(to_email: str, fragrance_name: str, old_price: str, new_pri
     safe_email = quote(to_email)
     safe_url = quote(product_url)
     unsub_link = f"{frontend_url}/unsubscribe?email={safe_email}&url={safe_url}"
+
+    image_block = ""
+    if picture:
+        image_block = f'<a href="{product_url}"><img src="{picture}" style="max-width: 200px; max-height: 200px; object-fit: contain; display: block; border: none;"></a>'
 
     msg = EmailMessage()
     msg['Subject'] = f"📉 Spadek ceny: {fragrance_name}!"
@@ -74,14 +78,17 @@ def send_price_alert(to_email: str, fragrance_name: str, old_price: str, new_pri
                                 </p>
                                 <b style="font-size: 22px; color: #1a1a1a; ;">Stara cena: {old_price}</b>
 
+                                
                                 <table border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 10px; margin-top: 15px; width: 80%;">
                                     <tr>
-                                        <td align="center" style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px 25px 25px 25px;">
-                                            <p style="margin: 10px 0 0 0; color: #888888; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Nowa cena</p>
-                                            <p style="margin: 5px 0 0 0; color: #0fc74d; font-size: 44px; font-weight: bold;">{new_price}</p>
+                                        <td align="center" style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 15px 20px 40px 20px;">
+                                            <p style="margin: 0 0 10px 0; color: #888888; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Nowa cena</p>
+                                            <p style="margin: 0 0 0 0; color: #0fc74d; font-size: 44px; font-weight: bold;">{new_price}</p>
                                         </td>
                                     </tr>
                                 </table>
+                                
+                                {image_block}
 
                                 <table border="0" cellspacing="0" cellpadding="0">
                                     <tr>
@@ -126,14 +133,17 @@ def send_price_alert(to_email: str, fragrance_name: str, old_price: str, new_pri
         print(f"INFO: Error while sending e-mail to: {to_email} about {fragrance_name}: {e}", flush=True)
         return False
 
-def send_confirmation_email(to_email: str, product_url: str, token: str, base_url: str, fragrance_name: str):
+def send_confirmation_email(to_email: str, product_url: str, picture: str, token: str, base_url: str, fragrance_name: str):
     sender_email = os.getenv("GMAIL_ADDRESS")
 
     safe_name = html.escape(fragrance_name)
-    safe_url = quote(product_url)
     confirm_link = f"{base_url}/confirm?token={token}"
 
-    msg = EmailMessage()
+    image_block = ""
+    if picture:
+        image_block = f'<a href="{product_url}"><img src="{picture}" style="max-width: 200px; max-height: 200px; object-fit: contain; display: block; border: none;"></a>'
+
+    msg = EmailMessage()    
     msg['Subject'] = "Potwierdź subskrypcję - ScentWatch"
     msg['From'] = f"ScentWatch <{sender_email}>" 
     msg['To'] = to_email
@@ -161,8 +171,10 @@ def send_confirmation_email(to_email: str, product_url: str, token: str, base_ur
                                 <h2 style="color: #333333; margin-top: 0; font-size: 24px;">📩 Prawie gotowe! 📩</h2>
                                 <p style="color: #666666; font-size: 16px; line-height: 1.6; margin-bottom: 22px; margin-top: 22px;">
                                     Ktoś (mamy nadzieję, że Ty) poprosił o powiadomienia o spadku ceny dla zapachu: <br>
-                                    <strong style="color: #1a1a1a; font-size: 18px;"><a href="{safe_url}"><u>{safe_name}</u></a></strong>
+                                    <strong style="color: #1a1a1a; font-size: 18px;"><a href="{product_url}"><u>{safe_name}</u></a></strong>
                                 </p>
+
+                                {image_block}
 
                                 <p style="color: #666666; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
                                     Aby potwierdzić swój adres e-mail i zacząć oszczędzać, kliknij w poniższy przycisk:

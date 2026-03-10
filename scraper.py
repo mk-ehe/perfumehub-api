@@ -62,6 +62,7 @@ class PerfumehubScraper:
         name = self.get_first_or_none(tree, '//*[@id="product-description"]/div[2]/h1/span/text()') or ""
         fragrance = f"{brand} {name}".strip().title()
         concetration = self.get_first_or_none(tree, '//*[@id="product-description"]/div[2]/h2/text()')
+        picture = self.get_first_or_none(tree, '//*[@id="product-description"]/div[1]/div[1]/img/@src')
         price = self.get_first_or_none(tree, '//*[@id="offers-body"]/div[1]/div[3]/a/span[1]/text()')
         low_30d = self.get_first_or_none(tree, '//*[@id="offers-header"]/div[2]/div[1]/span/span/span[4]/text()')
         shop_name = self.get_first_or_none(tree, '//*[@id="offers-body"]/div[1]/div[1]/a/text()')
@@ -70,6 +71,7 @@ class PerfumehubScraper:
         data = {
             "fragrance": fragrance,
             "concentration": concetration,
+            "picture": picture,
             "price": price,
             "low_30d": f"{low_30d} zł" if low_30d else None,
             "shop": {
@@ -80,4 +82,3 @@ class PerfumehubScraper:
         }    
 
         return data
-    
