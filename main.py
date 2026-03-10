@@ -276,7 +276,7 @@ def process_all_prices():
             collection.update_one({"_id": product["_id"]}, update_doc)
                 
         except Exception as e:
-            print(f"Error while checking: {url}: {e}", flush=True)
+            print(f"ERROR: Error while checking: {url}: {e}", flush=True)
 
     print("INFO: Cron check completed")
 
