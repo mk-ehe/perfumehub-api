@@ -36,15 +36,19 @@ Fetches current fragrance data and synchronizes it with the MongoDB database.
 `GET /subscribe?url={full_url}&email={your_email}`
 Registers an email address for price-drop notifications on a specific product.
 
-### 3. Unsubscribe
+### 3. Confirm subscription
+`GET /confirm?token={generated_token}`
+Confirms signing subscription after providing correct token, handled in e-mail.
+
+### 4. Unsubscribe
 `POST /unsubscribe`
 Removes a user from the alert list. Requires a JSON body: `{"url": "...", "email": "..."}`.
 
-### 4. Cron Price Check
+### 5. Cron Price Check
 `GET /cron-check?token={your_secret_token}`
 The automated heart of the API. Compares live prices with the database and dispatches emails if a promotion is detected.
 
-### 5. Health Check
+### 6. Health Check
 `GET /ping`
 Keep-alive endpoint to prevent server sleep and monitor uptime.
 
@@ -58,9 +62,10 @@ Keep-alive endpoint to prevent server sleep and monitor uptime.
 **Response:**
 ```json
 {
-  "fragrance": "dior sauvage",
+  "fragrance": "Dior Sauvage",
   "concentration": "woda toaletowa dla mężczyzn",
-  "price": "385.84 zł",
+  "picture": "https://www.elnino-parfum.pl/data/cache/thumb_min500_max750-min500_max750-12/products/39443/1660141574/christian-dior-sauvage-woda-toaletowa-dla-mezczyzn-100-ml-425724.jpg",
+  "price": "385.00 zł",
   "low_30d": "384.41 zł",
   "shop": {
     "name": "elnino-parfum.pl",
