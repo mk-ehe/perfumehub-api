@@ -276,7 +276,7 @@ def process_all_prices():
             update_doc = {"$set": set_fields}
 
             if is_good_deal:
-                print(f"{fragrance_name}: Threshold reached! Price difference: {price_diff} zł, new price: {new_p}zł, old price: {old_p}zł.", flush=True)
+                print(f"Threshold REACHED! {fragrance_name}: Price difference: {price_diff} zł, new price: {new_p}zł, old price: {old_p}zł.", flush=True)
                 for email in subscribers:
                     send_price_alert(
                         to_email=email,
@@ -293,9 +293,9 @@ def process_all_prices():
                 update_doc["$inc"] = {"emails_sent": len(subscribers)}
             else:
                 if new_p == old_p:
-                    print(f"{fragrance_name}: Threshold not reached. Price difference: {price_diff}.")
+                    print(f"Threshold NOT reached. {fragrance_name}: Price difference: {price_diff}.")
                 else:
-                    print(f"{fragrance_name}: Threshold not reached. Price difference: {price_diff}, new price: {new_p}zł, old price: {old_p}zł.", flush=True)
+                    print(f"Threshold NOT reached. {fragrance_name}: Price difference: {price_diff}, new price: {new_p}zł, old price: {old_p}zł.", flush=True)
 
             collection.update_one({"_id": product["_id"]}, update_doc)
                 
