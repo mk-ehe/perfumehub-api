@@ -293,7 +293,7 @@ def process_all_prices():
                 update_doc["$inc"] = {"emails_sent": len(subscribers)}
             else:
                 if new_p == old_p:
-                    print(f"Threshold NOT reached. {fragrance_name}: Price difference: {price_diff}zł.")
+                    print(f"Threshold NOT reached. {fragrance_name}: Price difference: {price_diff}zł, price: {old_p}zł")
                 else:
                     print(f"Threshold NOT reached. {fragrance_name}: Price difference: {price_diff}zł, new price: {new_p}zł, old price: {old_p}zł.", flush=True)
 
