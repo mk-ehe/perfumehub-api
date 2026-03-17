@@ -64,7 +64,7 @@ class PerfumehubScraper:
         concetration = self.get_first_or_none(tree, '//*[@id="product-description"]/div[2]/h2/text()')
         picture = self.get_first_or_none(tree, '//*[@id="product-description"]/div[1]/div[1]/img/@src')
         price = self.get_first_or_none(tree, '//*[@id="offers-body"]/div[1]/div[3]/a/span[1]/text()')
-        low_30d = self.get_first_or_none(tree, '//*[@id="offers-header"]/div[2]/div[1]/span/span/span[4]/text()')
+        low_30d = self.get_first_or_none(tree, '//*[@id="offers-header"]/div[3]/div[1]/span/span/span[4]/text()')
         shop_name = self.get_first_or_none(tree, '//*[@id="offers-body"]/div[1]/div[1]/a/text()')
         raw_shop_url = self.get_first_or_none(tree, '//*[@id="offers-body"]/div[1]/div[1]/a/@href')
 
