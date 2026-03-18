@@ -137,17 +137,18 @@ def subscribe_price(url: str, email: EmailStr, background_tasks: BackgroundTasks
 
         try:
             update_data = scraper.get_data(url)
-            update_fields = {"price": update_data.get("price")}
+            update_fields = {}
 
             new_picture = update_data.get("picture")
             if new_picture:
                 update_fields["picture"] = new_picture
                 picture = new_picture
 
-            collection.update_one(
-                {"url": url},
-                {"$set": update_fields}
-            )
+            if update_fields:
+                collection.update_one(
+                    {"url": url},
+                    {"$set": update_fields}
+                )
         except Exception:
             pass
 
