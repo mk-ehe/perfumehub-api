@@ -88,7 +88,7 @@ def get_price(url: str):
         return db_document
 
     except Exception as e:
-        print(f"ERROR: {str(e)}", flush=True)
+        print(f"ERROR: {str(e)}, route: /search", flush=True)
         raise HTTPException(status_code=500, detail="An error occurred while fetching the price.")
 
 @app.get("/subscribe")
@@ -128,7 +128,7 @@ def subscribe_price(url: str, email: EmailStr, background_tasks: BackgroundTasks
             
             collection.insert_one(db_document)
         except Exception as e:
-            print(f"ERROR: {e}", flush=True)
+            print(f"ERROR: {e}, route: /subscribe", flush=True)
             raise HTTPException(status_code=400, detail="An error occurred while fetching the price.")
     elif product_exists:
         fragrance_name = product_exists.get("fragrance")
@@ -301,7 +301,7 @@ def process_all_prices():
             collection.update_one({"_id": product["_id"]}, update_doc)
                 
         except Exception as e:
-            print(f"ERROR: Error while checking: {url}: {e}", flush=True)
+            print(f"ERROR: Error while checking: {url}: {e}, route: /cron-check", flush=True)
 
     print("INFO: Cron check completed")
 
