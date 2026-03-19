@@ -81,7 +81,7 @@ def send_price_alert(to_email: str, fragrance_name: str, picture: str, old_price
                                 
                                 <table border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 10px; margin-top: 15px; width: 80%;">
                                     <tr>
-                                        <td align="center" style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 10px 20px 10px 20px;">
+                                        <td align="center" style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 10px 20px 5px 20px;">
                                             <p style="margin: 0 0 0 0; color: #888888; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Nowa cena</p>
                                             <p style="margin: 0 0 0 0; color: #0fc74d; font-size: 44px; font-weight: bold;">{new_price}</p>
                                         </td>
