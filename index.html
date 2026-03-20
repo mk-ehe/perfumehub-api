@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f4f5f7; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f4f5f7; padding: 40px 0;">
+            <tr>
+                <td align="center">
+                    <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #e4e4e4">
+                        
+                        <tr>
+                            <td align="center" style="background-image: linear-gradient(to right, #155dfc, #9810fa); padding: 25px 20px;">
+                                <h1 style="color: #ffffff; margin: 0; font-size: 32px; letter-spacing: 1px;">ScentWatch</h1>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td align="center" style="padding: 28px 28px;">
+                                <h2 style="color: #333333; margin: 0; font-size: 28px;">🎉 Świetne wieści! 🎉</h2>
+                                <p style="color: #666666; font-size: 16px; line-height: 1.6; margin-bottom: 10px; margin-top: 22px;">
+                                    Cena dla zapachu <br>
+                                    <strong style="color: #1a1a1a; font-size: 18px;"><a href="{product_url}"><u>{safe_name}</u></a></strong><br>
+                                    który obserwujesz, właśnie spadła o <strong style="color: #e91010; font-size: 18px;"><u>{price_diff}</u></strong>.
+                                </p>
+                                <b style="font-size: 22px; color: #1a1a1a; ;">Stara cena: {old_price}</b>
+
+                                
+                                <table border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 10px; margin-top: 15px; width: 80%;">
+                                    <tr>
+                                        <td align="center" style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 10px 20px 5px 20px;">
+                                            <p style="margin: 0 0 0 0; color: #888888; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Nowa cena</p>
+                                            <p style="margin: 0 0 0 0; color: #0fc74d; font-size: 44px; font-weight: bold;">{new_price}</p>
+                                        </td>
+                                    </tr>
+                                </table>
+                                
+                                {image_block}
+
+                                <table border="0" cellspacing="0" cellpadding="0">
+                                    <tr>
+                                        <td align="center" style="padding-bottom: 28px;">
+                                            <p style="color: #999999; font-size: 12px; margin: 0;">
+                                                Najniższa cena sprzed 30 dni: {low_30d}.</p>
+                                    </tr>
+                                    <tr>
+                                        <td align="center" style="background-image: linear-gradient(to right, #155dfc, #9810fa); border-radius: 8px;">
+                                            <a href="{shop_url}" target="_blank" style="display: inline-block; padding: 16px 35px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold; border-radius: 6px;">
+                                                Zobacz ofertę
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <td align="center" style="background-color: #f8f9fa; padding: 25px; border-top: 1px solid #eeeeee;">
+                                <p style="color: #999999; font-size: 12px; margin: 0; line-height: 1.5;">
+                                    Wiadomość wygenerowana automatycznie przez ScentWatch.<br>
+                                    Jeśli nie chcesz już śledzić tego zapachu, możesz się <a href="{unsub_link}" style="color: #4b4b4b; text-decoration: underline;">wypisać z powiadomień</a>.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
