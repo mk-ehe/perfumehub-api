@@ -9,11 +9,21 @@ from pydantic import BaseModel, EmailStr
 from email_sender import send_price_alert, send_confirmation_email
 import secrets
 from datetime import datetime, timezone, timedelta
+from fastapi.middleware.cors import CORSMiddleware
 
 
 load_dotenv()
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 scraper = PerfumehubScraper()
 
 client = MongoClient(os.getenv("MONGO_URL"))
