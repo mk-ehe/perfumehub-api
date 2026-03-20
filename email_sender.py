@@ -63,7 +63,7 @@ def send_price_alert(to_email: str, fragrance_name: str, picture: str, old_price
                     <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #e4e4e4">
                         
                         <tr>
-                            <td align="center" style="background-color: #0084ff; padding: 25px 20px;">
+                            <td align="center" style="background-image: linear-gradient(to right, #155dfc, #9810fa); padding: 25px 20px;">
                                 <h1 style="color: #ffffff; margin: 0; font-size: 32px; letter-spacing: 1px;">ScentWatch</h1>
                             </td>
                         </tr>
@@ -97,7 +97,7 @@ def send_price_alert(to_email: str, fragrance_name: str, picture: str, old_price
                                                 Najniższa cena sprzed 30 dni: {low_30d}.</p>
                                     </tr>
                                     <tr>
-                                        <td align="center" style="background-color: #0084ff; border-radius: 8px;">
+                                        <td align="center" style="background-image: linear-gradient(to right, #155dfc, #9810fa) ; border-radius: 8px;">
                                             <a href="{shop_url}" target="_blank" style="display: inline-block; padding: 16px 35px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold; border-radius: 6px;">
                                                 Zobacz ofertę
                                             </a>
@@ -161,13 +161,13 @@ def send_confirmation_email(to_email: str, product_url: str, picture: str, token
                     <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #e4e4e4">
                         
                         <tr>
-                            <td align="center" style="background-color: #0084ff; padding: 25px 20px;">
+                            <td align="center" style="background-image: linear-gradient(to right, #155dfc, #9810fa); padding: 25px 20px;">
                                 <h1 style="color: #ffffff; margin: 0; font-size: 32px; letter-spacing: 1px;">ScentWatch</h1>
                             </td>
                         </tr>
 
                         <tr>
-                            <td align="center" style="padding: 40px 30px;">
+                            <td align="center" style="padding: 28px 28px;">
                                 <h2 style="color: #333333; margin-top: 0; font-size: 24px;">📩 Prawie gotowe! 📩</h2>
                                 <p style="color: #666666; font-size: 16px; line-height: 1.6; margin-bottom: 22px; margin-top: 22px;">
                                     Ktoś (mamy nadzieję, że Ty) poprosił o powiadomienia o spadku ceny dla zapachu: <br>
@@ -182,7 +182,7 @@ def send_confirmation_email(to_email: str, product_url: str, picture: str, token
 
                                 <table border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 10px;">
                                     <tr>
-                                        <td align="center" style="background-color: #0fc74d; border-radius: 6px;">
+                                        <td align="center" style="background-color: #09db2c; border-radius: 6px;">
                                             <a href="{confirm_link}" target="_blank" style="display: inline-block; padding: 16px 35px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold; border-radius: 6px;">
                                                 Potwierdzam subskrypcję
                                             </a>
