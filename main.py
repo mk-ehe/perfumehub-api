@@ -10,6 +10,7 @@ from email_sender import send_price_alert, send_confirmation_email
 import secrets
 from datetime import datetime, timezone, timedelta
 from fastapi.middleware.cors import CORSMiddleware
+from time import sleep
 
 
 load_dotenv()
@@ -309,9 +310,12 @@ def process_all_prices():
                     print(f"Threshold NOT reached. {fragrance_name}: Price difference: {price_diff}zł, new price: {new_p}zł, old price: {old_p}zł.", flush=True)
 
             collection.update_one({"_id": product["_id"]}, update_doc)
+            
                 
         except Exception as e:
             print(f"ERROR: Error while checking: {url}: {e}, route: /cron-check", flush=True)
+            
+        sleep(1)
 
     print("INFO: Cron check completed")
 
