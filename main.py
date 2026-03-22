@@ -11,6 +11,9 @@ import secrets
 from datetime import datetime, timezone, timedelta
 from fastapi.middleware.cors import CORSMiddleware
 from time import sleep
+import hmac
+import hashlib
+import urllib.parse
 
 
 load_dotenv()
@@ -52,6 +55,17 @@ def validate_perfumehub_url(url: str) -> str:
     except Exception as e:
         print(f"URL Validation Error: {e}", flush=True)
         raise HTTPException(status_code=400, detail="Malformed URL provided.")
+    
+def generate_unsubscribe_token(email: str, url: str) -> str:
+    secret = os.getenv("UNSUB_SECRET").encode('utf-8')
+    message = f"{email.lower()}:{url}".encode('utf-8')
+    signature = hmac.new(secret, message, hashlib.sha256).hexdigest()
+    return signature
+
+def verify_unsubscribe_token(email: str, url: str, token: str) -> bool:
+    expected_token = generate_unsubscribe_token(email, url)
+    return secrets.compare_digest(expected_token, token)
+
 
 @app.get("/")
 def guide():
@@ -203,10 +217,14 @@ def confirm_subscription(token: str):
 class UnsubscribeRequest(BaseModel):
     url: str
     email: EmailStr
+    token: str
 
 @app.post("/unsubscribe")
 def unsubscribe_price(data: UnsubscribeRequest):
     valid_url = validate_perfumehub_url(data.url)
+
+    if not verify_unsubscribe_token(data.email.lower(), valid_url, data.token):
+        raise HTTPException(status_code=403, detail="Unauthorized.")
     
     result = collection.update_one(
         {"url": valid_url},

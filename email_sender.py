@@ -7,6 +7,7 @@ from email.message import EmailMessage
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
+from main import generate_unsubscribe_token
 
 
 load_dotenv()
@@ -39,7 +40,8 @@ def send_price_alert(to_email: str, fragrance_name: str, picture: str, old_price
     safe_name = html.escape(fragrance_name)
     safe_email = quote(to_email)
     safe_url = quote(product_url)
-    unsub_link = f"{frontend_url}/unsubscribe?email={safe_email}&url={safe_url}"
+    token = generate_unsubscribe_token(to_email, product_url)
+    unsub_link = f"{frontend_url}/wypisz?email={safe_email}&url={safe_url}&token={token}"
 
     image_block = ""
     if picture:
