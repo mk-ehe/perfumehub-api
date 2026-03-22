@@ -6,14 +6,11 @@ from pymongo import MongoClient
 import os
 from urllib.parse import urlparse
 from pydantic import BaseModel, EmailStr
-from email_sender import send_price_alert, send_confirmation_email
+from email_sender import send_price_alert, send_confirmation_email, verify_unsubscribe_token
 import secrets
 from datetime import datetime, timezone, timedelta
 from fastapi.middleware.cors import CORSMiddleware
 from time import sleep
-import hmac
-import hashlib
-import urllib.parse
 
 
 load_dotenv()
@@ -55,17 +52,6 @@ def validate_perfumehub_url(url: str) -> str:
     except Exception as e:
         print(f"URL Validation Error: {e}", flush=True)
         raise HTTPException(status_code=400, detail="Malformed URL provided.")
-    
-def generate_unsubscribe_token(email: str, url: str) -> str:
-    secret = os.getenv("UNSUB_SECRET").encode('utf-8')
-    message = f"{email.lower()}:{url}".encode('utf-8')
-    signature = hmac.new(secret, message, hashlib.sha256).hexdigest()
-    return signature
-
-def verify_unsubscribe_token(email: str, url: str, token: str) -> bool:
-    expected_token = generate_unsubscribe_token(email, url)
-    return secrets.compare_digest(expected_token, token)
-
 
 @app.get("/")
 def guide():

@@ -7,7 +7,9 @@ from email.message import EmailMessage
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
-from main import generate_unsubscribe_token
+import hmac
+import hashlib
+import secrets
 
 
 load_dotenv()
@@ -24,6 +26,16 @@ def get_gmail_service():
         raise Exception("Brak autoryzacji! Wygeneruj token.json lub ustaw zmienną GMAIL_TOKEN_JSON")
 
     return build('gmail', 'v1', credentials=creds)
+
+def generate_unsubscribe_token(email: str, url: str) -> str:
+    secret = os.getenv("UNSUB_SECRET").encode('utf-8')
+    message = f"{email.lower()}:{url}".encode('utf-8')
+    signature = hmac.new(secret, message, hashlib.sha256).hexdigest()
+    return signature
+
+def verify_unsubscribe_token(email: str, url: str, token: str) -> bool:
+    expected_token = generate_unsubscribe_token(email, url)
+    return secrets.compare_digest(expected_token, token)
 
 def send_via_api(message_object):
     service = get_gmail_service()
