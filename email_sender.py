@@ -147,70 +147,67 @@ def send_price_alert(to_email: str, fragrance_name: str, picture: str, old_price
         print(f"INFO: Error while sending e-mail to: {to_email} about {fragrance_name}: {e}", flush=True)
         return False
 
-def send_confirmation_email(to_email: str, product_url: str, picture: str, token: str, base_url: str, fragrance_name: str):
+
+def generate_auth_token(email: str) -> str:
+    secret = os.getenv("AUTH_SECRET").encode('utf-8')
+    message = f"auth:{email.lower()}".encode('utf-8')
+    signature = hmac.new(secret, message, hashlib.sha256).hexdigest()
+    return signature
+
+def verify_auth_token(email: str, token: str) -> bool:
+    expected_token = generate_auth_token(email)
+    return secrets.compare_digest(expected_token, token)
+
+def send_auth_email(to_email: str, token: str):
     sender_email = os.getenv("GMAIL_ADDRESS")
+    frontend_url = os.getenv("FRONTEND_URL") 
+    
+    safe_email = quote(to_email)
+    auth_link = f"{frontend_url}/alerty?email={safe_email}&token={token}"
 
-    safe_name = html.escape(fragrance_name)
-    confirm_link = f"{base_url}/confirm?token={token}"
-
-    image_block = ""
-    if picture:
-        image_block = f'<a href="{product_url}"><img src="{picture}" style="max-width: 200px; max-height: 200px; object-fit: contain; display: block; border: none;"></a>'
-
-    msg = EmailMessage()    
-    msg['Subject'] = "Potwierdź subskrypcję - ScentWatch"
-    msg['From'] = f"ScentWatch <{sender_email}>" 
+    msg = EmailMessage()
+    msg['Subject'] = "Twój link dostępu do panelu ScentWatch"
+    msg['From'] = f"ScentWatch <{sender_email}>"
     msg['To'] = to_email
 
     html_content = f"""
-<!DOCTYPE html>
+    <!DOCTYPE html>
     <html>
     <head>
         <meta charset="utf-8">
     </head>
-    <body style="margin: 0; padding: 0; background-color: #f4f5f7; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
-        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f4f5f7; padding: 40px 0;">
+    <body style="margin: 0; padding: 0; background-color: #f4f5f7; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="padding: 40px 0;">
             <tr>
                 <td align="center">
                     <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #e4e4e4">
-                        
                         <tr>
                             <td align="center" style="background-image: linear-gradient(to right, #155dfc, #9810fa); padding: 25px 20px;">
                                 <h1 style="color: #ffffff; margin: 0; font-size: 32px; letter-spacing: 1px;">ScentWatch</h1>
                             </td>
                         </tr>
-
                         <tr>
-                            <td align="center" style="padding: 28px 28px;">
-                                <h2 style="color: #333333; margin-top: 0; font-size: 24px;">📩 Prawie gotowe! 📩</h2>
-                                <p style="color: #666666; font-size: 16px; line-height: 1.6; margin-bottom: 22px; margin-top: 22px;">
-                                    Ktoś (mamy nadzieję, że Ty) poprosił o powiadomienia o spadku ceny dla zapachu: <br>
-                                    <strong style="color: #1a1a1a; font-size: 18px;"><a href="{product_url}"><u>{safe_name}</u></a></strong>
-                                </p>
-
-                                {image_block}
-
+                            <td align="center" style="padding: 40px 28px;">
+                                <h2 style="color: #333333; margin-top: 0; font-size: 24px;">🔐 Zarządzaj powiadomieniami 🔐</h2>
                                 <p style="color: #666666; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
-                                    Aby potwierdzić swój adres e-mail i zacząć oszczędzać, kliknij w poniższy przycisk:
+                                    Oto Twój bezpieczny, jednorazowy link do panelu. Kliknij poniżej, aby dodać lub usunąć swoje alerty cenowe:
                                 </p>
-
-                                <table border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 10px;">
+                                <table border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 20px;">
                                     <tr>
-                                        <td align="center" style="background-color: #09db2c; border-radius: 6px;">
-                                            <a href="{confirm_link}" target="_blank" style="display: inline-block; padding: 16px 35px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold; border-radius: 6px;">
-                                                Potwierdzam subskrypcję
+                                        <td align="center" style="background-image: linear-gradient(to right, #155dfc, #9810fa); border-radius: 6px;">
+                                            <a href="{auth_link}" target="_blank" style="display: inline-block; padding: 16px 35px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold; border-radius: 6px;">
+                                                Otwórz panel ScentWatch
                                             </a>
                                         </td>
                                     </tr>
                                 </table>
                             </td>
                         </tr>
-
                         <tr>
                             <td align="center" style="background-color: #f8f9fa; padding: 20px; border-top: 1px solid #eeeeee;">
                                 <p style="color: #999999; font-size: 12px; margin: 0; line-height: 1.5;">
-                                    Jeśli to nie Ty prosiłeś o powiadomienia, zignoruj tę wiadomość.<br>
-                                    Wiadomość wygenerowana automatycznie przez ScentWatch.
+                                    Jeśli to nie Ty prosiłeś o dostęp, po prostu zignoruj tę wiadomość.<br>
+                                    Link jest generowany automatycznie.
                                 </p>
                             </td>
                         </tr>
@@ -226,8 +223,8 @@ def send_confirmation_email(to_email: str, product_url: str, picture: str, token
 
     try:
         send_via_api(msg)
-        print(f"INFO: Confirmation e-mail sent successfully to {to_email} about {fragrance_name}", flush=True)
+        print(f"INFO: Auth e-mail sent successfully to {to_email}", flush=True)
         return True
     except Exception as e:
-        print(f"INFO: Error while sending confirmation e-mail to: {to_email} about {fragrance_name}: {e}", flush=True)
+        print(f"INFO: Error while sending auth e-mail to: {to_email}: {e}", flush=True)
         return False

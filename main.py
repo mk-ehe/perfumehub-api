@@ -6,7 +6,7 @@ from pymongo import MongoClient
 import os
 from urllib.parse import urlparse
 from pydantic import BaseModel, EmailStr
-from email_sender import send_price_alert, send_confirmation_email, verify_unsubscribe_token
+from email_sender import send_price_alert, verify_unsubscribe_token, generate_auth_token, verify_auth_token, send_auth_email
 import secrets
 from datetime import datetime, timezone, timedelta
 from fastapi.middleware.cors import CORSMiddleware
@@ -30,7 +30,6 @@ scraper = PerfumehubScraper()
 client = MongoClient(os.getenv("MONGO_URL"))
 db = client.get_default_database()
 collection = db["prices"]
-pending_collection = db["pending_subscribers"]
 
 
 def validate_perfumehub_url(url: str) -> str:
@@ -103,102 +102,41 @@ def get_price(url: str):
         raise HTTPException(status_code=500, detail="An error occurred while fetching the price.")
 
 @app.get("/subscribe")
-def subscribe_price(url: str, email: EmailStr, background_tasks: BackgroundTasks):
+def subscribe_price(url: str, email: EmailStr, token: str):
     url = validate_perfumehub_url(url)
     email_lower = email.lower()
-    
-    fragrance_name = ""
-    concentration = ""
-    picture = ""
+
+    if not verify_auth_token(email_lower, token):
+        raise HTTPException(status_code=403, detail="Unauthorized.")
 
     product_exists = collection.find_one({"url": url})
-    
-    if product_exists and email_lower in product_exists.get("subscribers", []):
-        return {"message": f"You are already subscribed to this fragrance."}
-    
-    pending_exists = pending_collection.find_one({"url": url, "email": email_lower})
-    if pending_exists:
-        return {"message": "Verification e-mail has already been sent to your Inbox!"}
-    
-    if not product_exists:  
-        try:
-            scraped_data = scraper.get_data(url)
-            db_document = {
-                "fragrance": scraped_data.get("fragrance"),
-                "concentration": scraped_data.get("concentration"),
-                "picture": scraped_data.get("picture"),
-                "price": scraped_data.get("price"),
-                "low_30d": scraped_data.get("low_30d"),
-                "shop": scraped_data.get("shop"),
-                "url": url,
-                "subscribers": []
-            }
-            fragrance_name = db_document["fragrance"]
-            concentration = db_document["concentration"]
-            picture = db_document["picture"]
-            
-            collection.insert_one(db_document)
-        except Exception as e:
-            print(f"ERROR: {e}, route: /subscribe", flush=True)
-            raise HTTPException(status_code=400, detail="An error occurred while fetching the price.")
-    elif product_exists:
-        fragrance_name = product_exists.get("fragrance")
-        concentration = product_exists.get("concentration")
-        picture = product_exists.get("picture")
 
-        try:
-            update_data = scraper.get_data(url)
-            update_fields = {}
-
-            new_picture = update_data.get("picture")
-            if new_picture:
-                update_fields["picture"] = new_picture
-                picture = new_picture
-
-            if update_fields:
-                collection.update_one(
-                    {"url": url},
-                    {"$set": update_fields}
-                )
-        except Exception:
-            pass
-
-    token = secrets.token_urlsafe(16)
-
-    pending_collection.insert_one({
-        "fragrance": fragrance_name,
-        "concentration": concentration,
-        "email": email_lower,
-        "url": url,
-        "token": token,
-        "created_at": datetime.now(timezone.utc)
-    })  
-
-    base_url = os.getenv("API_BASE_URL", "https://perfumehub-api.onrender.com")
-    
-    background_tasks.add_task(send_confirmation_email, email_lower, url, picture, token, base_url, fragrance_name)
-
-    return {"message": f"Verification email sent to: {email_lower}. Check your inbox!"}
-
-@app.get("/confirm")
-def confirm_subscription(token: str):
-    pending_doc = pending_collection.find_one({"token": token})
-    
-    if not pending_doc:
-        raise HTTPException(status_code=400, detail="Incorrect or expired token.")
+    if product_exists:
+        if email_lower in product_exists.get("subscribers", []):
+            return {"message": "You are already subscribed to this fragrance."}
         
-    url = pending_doc["url"]
-    email = pending_doc["email"]
-    fragrance = pending_doc["fragrance"]
+        collection.update_one({"url": url}, {"$addToSet": {"subscribers": email_lower}})
+        print(f"INFO: {email_lower} subscribed to: {product_exists.get("fragrance")}!")
+        return {"message": "Fragrance successfully added to your alerts!"}
 
-    collection.update_one(
-        {"url": url},
-        {"$addToSet": {"subscribers": email}}
-    )
-
-    pending_collection.delete_one({"_id": pending_doc["_id"]})
-
-    return {"message": f"E-mail confirmed. You will receive promotion alerts on: {email.lower()} about {fragrance}."}
+    try:
+        scraped_data = scraper.get_data(url)
+        db_document = {
+            "fragrance": scraped_data.get("fragrance"),
+            "concentration": scraped_data.get("concentration"),
+            "picture": scraped_data.get("picture"),
+            "price": scraped_data.get("price"),
+            "low_30d": scraped_data.get("low_30d"),
+            "shop": scraped_data.get("shop"),
+            "url": url,
+            "subscribers": [email_lower]
+        }
+        collection.insert_one(db_document)
+        print(f"INFO: {email_lower} subscribed to: {product_exists.get("fragrance")}!")
+        return {"message": "Fragrance successfully added to your alerts!"}
+    except Exception as e:
+        print(f"ERROR: {e}, route: /subscribe", flush=True)
+        raise HTTPException(status_code=400, detail="Error while fetching data.")
 
 class UnsubscribeRequest(BaseModel):
     url: str
@@ -209,7 +147,10 @@ class UnsubscribeRequest(BaseModel):
 def unsubscribe_price(data: UnsubscribeRequest):
     valid_url = validate_perfumehub_url(data.url)
 
-    if not verify_unsubscribe_token(data.email.lower(), valid_url, data.token):
+    is_valid_unsub = verify_unsubscribe_token(data.email.lower(), valid_url, data.token)
+    is_valid_auth = verify_auth_token(data.email.lower(), data.token)
+
+    if not (is_valid_unsub or is_valid_auth):
         raise HTTPException(status_code=403, detail="Unauthorized.")
     
     result = collection.update_one(
@@ -222,6 +163,29 @@ def unsubscribe_price(data: UnsubscribeRequest):
 
     return {"message": f"Success! {data.email} has been unsubscribed from alerts for this product."}
 
+class AuthRequest(BaseModel):
+    email: EmailStr
+
+@app.post("/request-access")
+def request_access(data: AuthRequest, background_tasks: BackgroundTasks):
+    email_lower = data.email.lower()
+    token = generate_auth_token(email_lower)
+    background_tasks.add_task(send_auth_email, email_lower, token)
+    print(f"Access link has been sent to {email_lower}.", flush=True)
+    return {"message": "Access link has been sent to your e-mail."}
+
+@app.get("/my-alerts")
+def get_my_alerts(email: str, token: str):
+    email_lower = email.lower()
+    if not verify_auth_token(email_lower, token):
+        raise HTTPException(status_code=403, detail="Unauthorized.")
+    
+    user_perfumes = list(collection.find(
+        {"subscribers": email_lower},
+        {"_id": 0, "fragrance": 1, "picture": 1, "price": 1, "low_30d": 1, "url": 1}
+    ))
+    return {"alerts": user_perfumes}
+
 def parse_price(price_str: str) -> float:
     if not price_str:
         return 0.0
@@ -232,9 +196,6 @@ def parse_price(price_str: str) -> float:
         return 0.0
 
 def process_all_prices():
-    cutoff_time = datetime.now(timezone.utc) - timedelta(hours=6)
-    pending_collection.delete_many({"created_at": {"$lt": cutoff_time}})
-
     products = collection.find({})
     
     for product in products:
