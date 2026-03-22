@@ -47,8 +47,7 @@ def send_via_api(message_object):
 
 def send_price_alert(to_email: str, fragrance_name: str, picture: str, old_price: str, new_price: str, price_diff: str, low_30d: str, product_url: str, shop_url: str):
     gmail_address = os.getenv("GMAIL_ADDRESS")
-
-    frontend_url = os.getenv("FRONTEND_URL", "#")
+    frontend_url = os.getenv("FRONTEND_URL")
     safe_name = html.escape(fragrance_name)
     safe_email = quote(to_email)
     safe_url = quote(product_url)
