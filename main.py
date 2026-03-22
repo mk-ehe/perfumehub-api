@@ -305,7 +305,7 @@ def process_all_prices():
                 update_doc["$inc"] = {"emails_sent": len(subscribers)}
             else:
                 if new_p == old_p:
-                    print(f"Threshold NOT reached. {fragrance_name}: Price difference: {price_diff}zł, price: {old_p}zł")
+                    print(f"Threshold NOT reached. {fragrance_name}: Price difference: {price_diff}zł, price: {old_p}zł", flush=True)
                 else:
                     print(f"Threshold NOT reached. {fragrance_name}: Price difference: {price_diff}zł, new price: {new_p}zł, old price: {old_p}zł.", flush=True)
 
@@ -317,7 +317,7 @@ def process_all_prices():
             
         sleep(1)
 
-    print("INFO: Cron check completed")
+    print("INFO: Cron check completed", flush=True)
 
 @app.get("/cron-check")
 def run_price_checks(background_tasks: BackgroundTasks, token: str = ""):
@@ -327,7 +327,7 @@ def run_price_checks(background_tasks: BackgroundTasks, token: str = ""):
 
     background_tasks.add_task(process_all_prices)
 
-    print("INFO: Cron check started.")
+    print("INFO: Cron check started.", flush=True)
     return {"message": "Cron check started."}
 
 @app.get("/ping")
