@@ -1,3 +1,4 @@
+from datetime import datetime, timezone, timedelta
 import os
 import base64
 import json
@@ -10,9 +11,12 @@ from dotenv import load_dotenv
 import hmac
 import hashlib
 import secrets
+import time
 
 
 load_dotenv()
+
+WINDOW_SECONDS = 6 * 3600
 
 def get_gmail_service():
     token_data = os.getenv("GMAIL_TOKEN_JSON")
@@ -149,13 +153,21 @@ def send_price_alert(to_email: str, fragrance_name: str, picture: str, old_price
 
 def generate_auth_token(email: str) -> str:
     secret = os.getenv("AUTH_SECRET").encode('utf-8')
-    message = f"auth:{email.lower()}".encode('utf-8')
+    current_window = int(time.time() // WINDOW_SECONDS)
+    message = f"auth:{email.lower()}:{current_window}".encode('utf-8')
     signature = hmac.new(secret, message, hashlib.sha256).hexdigest()
     return signature
 
 def verify_auth_token(email: str, token: str) -> bool:
-    expected_token = generate_auth_token(email)
-    return secrets.compare_digest(expected_token, token)
+    if secrets.compare_digest(generate_auth_token(email), token):
+        return True
+
+    secret = os.getenv("AUTH_SECRET").encode('utf-8')
+    previous_window = int(time.time() // WINDOW_SECONDS)
+    msg_yesterday = f"auth:{email.lower()}:{previous_window}".encode('utf-8')
+    sig_yesterday = hmac.new(secret, msg_yesterday, hashlib.sha256).hexdigest()
+    return secrets.compare_digest(sig_yesterday, token)
+
 
 def send_auth_email(to_email: str, token: str):
     sender_email = os.getenv("GMAIL_ADDRESS")
