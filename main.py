@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
 from scraper import PerfumehubScraper   
 from dotenv import load_dotenv
 import re
@@ -7,10 +7,12 @@ import os
 from urllib.parse import urlparse
 from pydantic import BaseModel, EmailStr
 from email_sender import send_price_alert, verify_unsubscribe_token, generate_auth_token, verify_auth_token, send_auth_email
-import secrets
-from datetime import datetime, timezone, timedelta
+import secrets  
 from fastapi.middleware.cors import CORSMiddleware
 from time import sleep
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 
 load_dotenv()
@@ -19,6 +21,7 @@ app = FastAPI()
 
 origins = [
     "https://scentwatch.vercel.app",
+    "http://localhost:5173"
 ]
 
 app.add_middleware(
@@ -28,6 +31,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 scraper = PerfumehubScraper()
 
@@ -171,7 +178,8 @@ class AuthRequest(BaseModel):
     email: EmailStr
 
 @app.post("/request-access")
-def request_access(data: AuthRequest, background_tasks: BackgroundTasks):
+@limiter.limit("5/hour")
+def request_access(request: Request, data: AuthRequest, background_tasks: BackgroundTasks):
     email_lower = data.email.lower()
     token = generate_auth_token(email_lower)
     background_tasks.add_task(send_auth_email, email_lower, token)
