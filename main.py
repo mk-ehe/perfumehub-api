@@ -143,7 +143,7 @@ def subscribe_price(url: str, email: EmailStr, token: str):
             "subscribers": [email_lower]
         }
         collection.insert_one(db_document)
-        print(f"INFO: {email_lower} subscribed to: {product_exists.get("fragrance")}!")
+        print(f"INFO: {email_lower} subscribed to: {db_document["fragrance"]}!")
         return {"message": "Fragrance successfully added to your alerts!"}
     except Exception as e:
         print(f"ERROR: {e}, route: /subscribe", flush=True)
