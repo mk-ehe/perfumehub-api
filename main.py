@@ -245,7 +245,7 @@ def process_all_prices():
             price_diff = round(old_p - new_p, 2)
             formatted_diff = f"{price_diff:.2f} zł".replace(".", ",")
 
-            percentage = 7.5 <= (1 - new_p / old_p) * 100
+            percentage = 7 <= (1 - new_p / old_p) * 100
             is_good_deal = price_diff >= 5.00 and percentage
             price_went_up = new_p > old_p
             
