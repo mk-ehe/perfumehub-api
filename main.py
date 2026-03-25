@@ -67,7 +67,7 @@ def validate_perfumehub_url(url: str) -> str:
 def guide():
     return {
         "routes": [
-            "/docs",
+            "[GET] /docs",
             "[GET] /search?url={full_url}",
             "[GET] /subscribe?url={full_url}&email={your_email}, 'token': {token}",
             "[GET] /cron-check?token={your_custom_token}",
