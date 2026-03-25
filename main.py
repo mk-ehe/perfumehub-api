@@ -69,11 +69,10 @@ def guide():
         "routes": [
             "/docs",
             "[GET] /search?url={full_url}",
-            "[GET] /subscribe?url={full_url}&email={your_email}",
-            "[GET] /confirm?token={generated_token}",
+            "[GET] /subscribe?url={full_url}&email={your_email}, 'token': {token}",
             "[GET] /cron-check?token={your_custom_token}",
             "[GET] /ping",
-            "[POST] /unsubscribe (requires JSON body: {'url': '{full_url}', 'email': '{your_email}'})"
+            "[POST] /unsubscribe (requires JSON body: {'url': '{full_url}', 'email': '{your_email}', 'token': {token}})"
         ],
         "author": "mk-ehe",
         "github": "https://github.com/mk-ehe/perfumehub_api"
