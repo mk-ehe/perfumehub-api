@@ -287,14 +287,15 @@ def process_all_prices():
 
             collection.update_one({"_id": product["_id"]}, update_doc)
             
-        
-        except HTTPException as e:
-            if e.status_code == 404:
-                print(f"INFO: {fragrance_name}: 404 not found, removing...", flush=True)
-                collection.delete_one({"_id": product["_id"]})
 
         except Exception as e:
-            print(f"ERROR: Error while checking: {url}: {e}, route: /cron-check", flush=True)
+            error_message = str(e)
+            
+            if "404 Client Error" in error_message or "404" in error_message:
+                print(f"INFO: {fragrance_name}: 404 not found, removing...", flush=True)
+                collection.delete_one({"_id": product["_id"]})
+            else:
+                print(f"ERROR: Error while checking: {url}: {error_message}, route: /cron-check", flush=True)
             
         sleep(1)
 
