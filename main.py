@@ -79,7 +79,8 @@ def guide():
         }
 
 @app.get("/search")
-def get_price(url: str):
+@limiter.limit("15/minute")
+def get_price(request: Request, url: str):
     url = validate_perfumehub_url(url)
 
     existing_product = collection.find_one({"url": url})
@@ -112,7 +113,8 @@ def get_price(url: str):
         raise HTTPException(status_code=500, detail="An error occurred while fetching the price.")
 
 @app.get("/subscribe")
-def subscribe_price(url: str, email: EmailStr, token: str):
+@limiter.limit("20/hour")
+def subscribe_price(request: Request, url: str, email: EmailStr, token: str):
     url = validate_perfumehub_url(url)
     email_lower = email.lower()
 
@@ -154,7 +156,8 @@ class UnsubscribeRequest(BaseModel):
     token: str
 
 @app.post("/unsubscribe")
-def unsubscribe_price(data: UnsubscribeRequest):
+@limiter.limit("20/hour")
+def unsubscribe_price(request: Request, data: UnsubscribeRequest):
     valid_url = validate_perfumehub_url(data.url)
 
     is_valid_unsub = verify_unsubscribe_token(data.email.lower(), valid_url, data.token)
@@ -186,7 +189,8 @@ def request_access(request: Request, data: AuthRequest, background_tasks: Backgr
     return {"message": "Access link has been sent to your e-mail."}
 
 @app.get("/my-alerts")
-def get_my_alerts(email: str, token: str):
+@limiter.limit("30/minute")
+def get_my_alerts(request: Request, email: str, token: str):
     email_lower = email.lower()
     if not verify_auth_token(email_lower, token):
         raise HTTPException(status_code=403, detail="Unauthorized.")
@@ -313,5 +317,6 @@ def run_price_checks(background_tasks: BackgroundTasks, token: str = ""):
     return {"message": "Cron check started."}
 
 @app.get("/ping")
-def ping():
+@limiter.limit("50/hour")
+def ping(request: Request):
     return {"status": "ok"}
