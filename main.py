@@ -198,7 +198,7 @@ def get_my_alerts(request: Request, email: str, token: str):
     user_perfumes = list(collection.find(
         {"subscribers": email_lower},
         {"_id": 0, "fragrance": 1, "picture": 1, "price": 1, "low_30d": 1, "url": 1}
-    )).sort("fragrance", 1)
+    ).sort("fragrance", 1))
     return {"alerts": user_perfumes}
 
 def parse_price(price_str: str) -> float:
