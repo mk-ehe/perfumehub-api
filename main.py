@@ -128,7 +128,7 @@ def subscribe_price(request: Request, url: str, email: EmailStr, token: str):
             return {"message": "You are already subscribed to this fragrance."}
         
         collection.update_one({"url": url}, {"$addToSet": {"subscribers": email_lower}})
-        print(f"INFO: {email_lower} subscribed to: {product_exists.get("fragrance")}!")
+        print(f"INFO: {email_lower} subscribed to: {product_exists.get("fragrance")}!", flush=True)
         return {"message": "Fragrance successfully added to your alerts!"}
 
     try:
@@ -144,7 +144,7 @@ def subscribe_price(request: Request, url: str, email: EmailStr, token: str):
             "subscribers": [email_lower]
         }
         collection.insert_one(db_document)
-        print(f"INFO: {email_lower} subscribed to: {db_document["fragrance"]}!")
+        print(f"INFO: {email_lower} subscribed to: {db_document["fragrance"]}!", flush=True)
         return {"message": "Fragrance successfully added to your alerts!"}
     except Exception as e:
         print(f"ERROR: {e}, route: /subscribe", flush=True)
@@ -301,7 +301,7 @@ def process_all_prices():
             else:
                 print(f"ERROR: Error while checking: {url}: {error_message}, route: /cron-check", flush=True)
             
-        sleep(1)
+        sleep(3)
 
     print("INFO: Cron check completed", flush=True)
 
