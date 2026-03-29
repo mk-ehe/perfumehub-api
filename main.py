@@ -79,7 +79,7 @@ def guide():
         }
 
 @app.get("/search")
-@limiter.limit("15/minute")
+@limiter.limit("1/second, 15/minute")
 def get_price(request: Request, url: str):
     url = validate_perfumehub_url(url)
 
@@ -113,7 +113,7 @@ def get_price(request: Request, url: str):
         raise HTTPException(status_code=500, detail="An error occurred while fetching the price.")
 
 @app.get("/subscribe")
-@limiter.limit("20/hour")
+@limiter.limit("3/minute, 20/hour")
 def subscribe_price(request: Request, url: str, email: EmailStr, token: str):
     url = validate_perfumehub_url(url)
     email_lower = email.lower()
@@ -180,7 +180,7 @@ class AuthRequest(BaseModel):
     email: EmailStr
 
 @app.post("/request-access")
-@limiter.limit("5/hour")
+@limiter.limit("1/minute, 5/hour")
 def request_access(request: Request, data: AuthRequest, background_tasks: BackgroundTasks):
     email_lower = data.email.lower()
     token = generate_auth_token(email_lower)
