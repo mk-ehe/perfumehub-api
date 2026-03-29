@@ -16,7 +16,7 @@ import time
 
 load_dotenv()
 
-WINDOW_SECONDS = 6 * 3600
+WINDOW_SECONDS = 1 * 3600
 
 def get_gmail_service():
     token_data = os.getenv("GMAIL_TOKEN_JSON")
@@ -163,7 +163,7 @@ def verify_auth_token(email: str, token: str) -> bool:
         return True
 
     secret = os.getenv("AUTH_SECRET").encode('utf-8')
-    previous_window = int(time.time() // WINDOW_SECONDS)
+    previous_window = int(time.time() // WINDOW_SECONDS) - 1
     msg_yesterday = f"auth:{email.lower()}:{previous_window}".encode('utf-8')
     sig_yesterday = hmac.new(secret, msg_yesterday, hashlib.sha256).hexdigest()
     return secrets.compare_digest(sig_yesterday, token)
@@ -201,7 +201,7 @@ def send_auth_email(to_email: str, token: str):
                             <td align="center" style="padding: 40px 28px;">
                                 <h2 style="color: #333333; margin-top: 0; font-size: 24px;">🔐 Potwierdzenie 🔐</h2>
                                 <p style="color: #666666; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
-                                    Oto Twój link do panelu. Kliknij poniżej, aby dodać lub usunąć swoje alerty cenowe:
+                                    Oto Twój ograniczony czasowo link do panelu. Kliknij poniżej, aby dodać lub usunąć swoje alerty cenowe:
                                 </p>
                                 <table border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 20px;">
                                     <tr>
