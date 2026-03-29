@@ -113,7 +113,7 @@ def get_price(request: Request, url: str):
         raise HTTPException(status_code=500, detail="An error occurred while fetching the price.")
 
 @app.get("/subscribe")
-@limiter.limit("3/minute, 20/hour")
+@limiter.limit("1/second, 5/minute, 20/hour")
 def subscribe_price(request: Request, url: str, email: EmailStr, token: str):
     url = validate_perfumehub_url(url)
     email_lower = email.lower()
