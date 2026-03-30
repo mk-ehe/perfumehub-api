@@ -223,7 +223,8 @@ def process_all_prices():
         old_price_str = product.get("price")
         fragrance_name = product.get("fragrance", "Ulubiony zapach")
         picture = product.get("picture")
-        
+        is_good_deal = False
+
         try:
             scraped_data = scraper.get_data(url)
             new_price_str = scraped_data.get("price")
@@ -281,6 +282,7 @@ def process_all_prices():
                         product_url=url,
                         shop_url=shop_url
                     )
+                    sleep(1)
                 
                 update_doc["$inc"] = {"emails_sent": len(subscribers)}
             else:
@@ -300,8 +302,9 @@ def process_all_prices():
                 collection.delete_one({"_id": product["_id"]})
             else:
                 print(f"ERROR: Error while checking: {url}: {error_message}, route: /cron-check", flush=True)
-            
-        sleep(3)
+
+        if not is_good_deal:
+            sleep(3)
 
     print("INFO: Cron check completed.", flush=True)
 
