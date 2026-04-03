@@ -87,7 +87,7 @@ def send_price_alert(to_email: str, fragrance_name: str, picture: str, old_price
 
                         <tr>
                             <td align="center" style="padding: 28px 28px;">
-                                <h2 style="color: #333333; margin: 0; font-size: 28px;">🎉 Świetne wieści! 🎉</h2>
+                                <h2 style="color: #333333; margin: 0; font-size: 26px;">🎉 Świetne wieści! 🎉</h2>
                                 <p style="color: #666666; font-size: 16px; line-height: 1.6; margin-bottom: 10px; margin-top: 22px;">
                                     Cena dla zapachu <br>
                                     <strong style="color: #1a1a1a; font-size: 18px;"><a href="{product_url}"><u>{safe_name}</u></a></strong><br>
