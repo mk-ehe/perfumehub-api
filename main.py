@@ -69,7 +69,7 @@ def guide():
         "routes": [
             "[GET] /docs",
             "[GET] /search?url={full_url}",
-            "[GET] /subscribe?url={full_url}&email={your_email}&token={token},
+            "[GET] /subscribe?url={full_url}&email={your_email}&token={token}",
             "[GET] /cron-check?token={your_custom_token}",
             "[GET] /ping",
             "[POST] /unsubscribe (requires JSON body: {'url': '{full_url}', 'email': '{your_email}', 'token': {token}})"
