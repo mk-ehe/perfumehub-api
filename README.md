@@ -9,7 +9,7 @@ A high-performance price tracking and notification engine for fragrances, built 
 * **Intelligent Scraping**: Real-time extraction of fragrance data, current prices, and lowest 30-day history from Perfumehub.pl.
 * **Advanced Link Decoding**: Implements a custom Base64/JSON decoder to bypass hidden shop tokens and provide direct vendor URLs.
 * **Smart Subscription Logic**: Multi-user subscription management per product using MongoDB's atomic operators (`$addToSet`, `$pull`).
-* **Automated Price Alerts**: Well crafted HTML email notifications triggered by a configurable price-drop threshold (5PLN & 7.5%).
+* **Automated Price Alerts**: Well crafted HTML email notifications triggered by a configurable price-drop threshold (5PLN & 7%).
 * **Security First**: A token-protected `/cron-check` endpoint designed for secure, scheduled automation via external cron services.
 
 ---
