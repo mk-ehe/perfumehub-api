@@ -27,7 +27,7 @@ def get_gmail_service():
     elif os.path.exists('token.json'):
         creds = Credentials.from_authorized_user_file('token.json')
     else:
-        raise Exception("Brak autoryzacji! Wygeneruj token.json lub ustaw zmienną GMAIL_TOKEN_JSON")
+        raise Exception("Authorization failed! Generate token.json or set GMAIL_TOKEN_JSON.")
 
     return build('gmail', 'v1', credentials=creds)
 
