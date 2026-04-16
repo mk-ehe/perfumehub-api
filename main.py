@@ -67,9 +67,9 @@ def validate_perfumehub_url(url: str) -> str:
 def guide():
     return {
         "routes": [
-            "/docs",
+            "[GET] /docs",
             "[GET] /search?url={full_url}",
-            "[GET] /subscribe?url={full_url}&email={your_email}, 'token': {token}",
+            "[GET] /subscribe?url={full_url}&email={your_email}&token={token}",
             "[GET] /cron-check?token={your_custom_token}",
             "[GET] /ping",
             "[POST] /unsubscribe (requires JSON body: {'url': '{full_url}', 'email': '{your_email}', 'token': {token}})"
@@ -79,7 +79,8 @@ def guide():
         }
 
 @app.get("/search")
-def get_price(url: str):
+@limiter.limit("1/second, 15/minute")
+def get_price(request: Request, url: str):
     url = validate_perfumehub_url(url)
 
     existing_product = collection.find_one({"url": url})
@@ -112,7 +113,8 @@ def get_price(url: str):
         raise HTTPException(status_code=500, detail="An error occurred while fetching the price.")
 
 @app.get("/subscribe")
-def subscribe_price(url: str, email: EmailStr, token: str):
+@limiter.limit("1/second, 5/minute, 20/hour")
+def subscribe_price(request: Request, url: str, email: EmailStr, token: str):
     url = validate_perfumehub_url(url)
     email_lower = email.lower()
 
@@ -126,7 +128,7 @@ def subscribe_price(url: str, email: EmailStr, token: str):
             return {"message": "You are already subscribed to this fragrance."}
         
         collection.update_one({"url": url}, {"$addToSet": {"subscribers": email_lower}})
-        print(f"INFO: {email_lower} subscribed to: {product_exists.get("fragrance")}!")
+        print(f"INFO: {email_lower} subscribed to: {product_exists.get("fragrance")}!", flush=True)
         return {"message": "Fragrance successfully added to your alerts!"}
 
     try:
@@ -142,7 +144,7 @@ def subscribe_price(url: str, email: EmailStr, token: str):
             "subscribers": [email_lower]
         }
         collection.insert_one(db_document)
-        print(f"INFO: {email_lower} subscribed to: {db_document["fragrance"]}!")
+        print(f"INFO: {email_lower} subscribed to: {db_document["fragrance"]}!", flush=True)
         return {"message": "Fragrance successfully added to your alerts!"}
     except Exception as e:
         print(f"ERROR: {e}, route: /subscribe", flush=True)
@@ -154,7 +156,8 @@ class UnsubscribeRequest(BaseModel):
     token: str
 
 @app.post("/unsubscribe")
-def unsubscribe_price(data: UnsubscribeRequest):
+@limiter.limit("20/hour")
+def unsubscribe_price(request: Request, data: UnsubscribeRequest):
     valid_url = validate_perfumehub_url(data.url)
 
     is_valid_unsub = verify_unsubscribe_token(data.email.lower(), valid_url, data.token)
@@ -177,7 +180,7 @@ class AuthRequest(BaseModel):
     email: EmailStr
 
 @app.post("/request-access")
-@limiter.limit("5/hour")
+@limiter.limit("1/minute, 5/hour")
 def request_access(request: Request, data: AuthRequest, background_tasks: BackgroundTasks):
     email_lower = data.email.lower()
     token = generate_auth_token(email_lower)
@@ -186,7 +189,8 @@ def request_access(request: Request, data: AuthRequest, background_tasks: Backgr
     return {"message": "Access link has been sent to your e-mail."}
 
 @app.get("/my-alerts")
-def get_my_alerts(email: str, token: str):
+@limiter.limit("30/minute")
+def get_my_alerts(request: Request, email: str, token: str):
     email_lower = email.lower()
     if not verify_auth_token(email_lower, token):
         raise HTTPException(status_code=403, detail="Unauthorized.")
@@ -194,7 +198,7 @@ def get_my_alerts(email: str, token: str):
     user_perfumes = list(collection.find(
         {"subscribers": email_lower},
         {"_id": 0, "fragrance": 1, "picture": 1, "price": 1, "low_30d": 1, "url": 1}
-    ))
+    ).sort("fragrance", 1))
     return {"alerts": user_perfumes}
 
 def parse_price(price_str: str) -> float:
@@ -219,7 +223,8 @@ def process_all_prices():
         old_price_str = product.get("price")
         fragrance_name = product.get("fragrance", "Ulubiony zapach")
         picture = product.get("picture")
-        
+        is_good_deal = False
+
         try:
             scraped_data = scraper.get_data(url)
             new_price_str = scraped_data.get("price")
@@ -264,7 +269,7 @@ def process_all_prices():
             update_doc = {"$set": set_fields}
 
             if is_good_deal:
-                print(f"Threshold REACHED! {fragrance_name}: Price difference: {price_diff}zł, new price: {new_p}zł, old price: {old_p}zł.", flush=True)
+                print(f"INFO: Threshold REACHED! {fragrance_name}: Price difference: {price_diff}zł, new price: {new_p}zł, old price: {old_p}zł.", flush=True)
                 for email in subscribers:
                     send_price_alert(
                         to_email=email,
@@ -277,23 +282,31 @@ def process_all_prices():
                         product_url=url,
                         shop_url=shop_url
                     )
+                    sleep(1)
                 
                 update_doc["$inc"] = {"emails_sent": len(subscribers)}
             else:
                 if new_p == old_p:
-                    print(f"Threshold NOT reached. {fragrance_name}: Price difference: {price_diff}zł, price: {old_p}zł", flush=True)
+                    print(f"INFO: Threshold NOT reached. {fragrance_name}: Price difference: {price_diff}zł, price: {old_p}zł", flush=True)
                 else:
-                    print(f"Threshold NOT reached. {fragrance_name}: Price difference: {price_diff}zł, new price: {new_p}zł, old price: {old_p}zł.", flush=True)
+                    print(f"INFO: Threshold NOT reached. {fragrance_name}: Price difference: {price_diff}zł, new price: {new_p}zł, old price: {old_p}zł.", flush=True)
 
             collection.update_one({"_id": product["_id"]}, update_doc)
             
-                
-        except Exception as e:
-            print(f"ERROR: Error while checking: {url}: {e}, route: /cron-check", flush=True)
-            
-        sleep(1)
 
-    print("INFO: Cron check completed", flush=True)
+        except Exception as e:
+            error_message = str(e)
+            
+            if "404 Client Error" in error_message or "404" in error_message:
+                print(f"INFO: {fragrance_name}: 404 not found, removing...", flush=True)
+                collection.delete_one({"_id": product["_id"]})
+            else:
+                print(f"ERROR: Error while checking: {url}: {error_message}, route: /cron-check", flush=True)
+
+        if not is_good_deal:
+            sleep(3)
+
+    print("INFO: Cron check completed.", flush=True)
 
 @app.get("/cron-check")
 def run_price_checks(background_tasks: BackgroundTasks, token: str = ""):
@@ -307,5 +320,6 @@ def run_price_checks(background_tasks: BackgroundTasks, token: str = ""):
     return {"message": "Cron check started."}
 
 @app.get("/ping")
-def ping():
+@limiter.limit("20/hour")
+def ping(request: Request):
     return {"status": "ok"}
