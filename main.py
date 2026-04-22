@@ -39,8 +39,29 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 scraper = PerfumehubScraper()
 
 client = MongoClient(os.getenv("MONGO_URL"))
-db = client.get_default_database()
+db = client["perfumehub_db"]
 collection = db["prices"]
+
+db_fragrantica = client["fragrantica_db"]
+collection_frag_data = db_fragrantica["fragrantica_dataset"]
+
+@app.get("/autocomplete")
+@limiter.limit("60/minute")
+def autocomplete(request: Request, q: str = ""):
+    if len(q) < 2:
+        return {"results": []}
+    
+    results = list(collection_frag_data.find(
+        {
+            "$or": [
+                {"Perfume": {"$regex": q, "$options": "i"}},
+                {"Brand": {"$regex": q, "$options": "i"}}
+            ]
+        },
+        {"_id": 0, "url": 1, "Perfume": 1, "Brand": 1}
+    ).limit(10))
+    
+    return {"results": results}
 
 
 def validate_perfumehub_url(url: str) -> str:
