@@ -51,13 +51,19 @@ def autocomplete(request: Request, q: str = ""):
     if len(q) < 2:
         return {"results": []}
     
-    results = list(collection_frag_data.find(
-        {
+    words = q.strip().split()
+    
+    and_conditions = []
+    for word in words:
+        and_conditions.append({
             "$or": [
-                {"Perfume": {"$regex": q, "$options": "i"}},
-                {"Brand": {"$regex": q, "$options": "i"}}
+                {"Perfume": {"$regex": word, "$options": "i"}},
+                {"Brand": {"$regex": word, "$options": "i"}}
             ]
-        },
+        })
+        
+    results = list(collection_frag_data.find(
+        {"$and": and_conditions},
         {"_id": 0, "url": 1, "Perfume": 1, "Brand": 1}
     ).limit(10))
     
