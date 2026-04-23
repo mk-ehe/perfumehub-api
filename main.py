@@ -347,6 +347,6 @@ def run_price_checks(background_tasks: BackgroundTasks, token: str = ""):
     return {"message": "Cron check started."}
 
 @app.get("/ping")
-@limiter.limit("50/hour")
+@limiter.limit("20/minute")
 def ping(request: Request):
     return {"status": "ok"}
