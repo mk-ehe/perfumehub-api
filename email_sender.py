@@ -164,9 +164,9 @@ def verify_auth_token(email: str, token: str) -> bool:
 
     secret = os.getenv("AUTH_SECRET").encode('utf-8')
     previous_window = int(time.time() // WINDOW_SECONDS) - 1
-    msg_yesterday = f"auth:{email.lower()}:{previous_window}".encode('utf-8')
-    sig_yesterday = hmac.new(secret, msg_yesterday, hashlib.sha256).hexdigest()
-    return secrets.compare_digest(sig_yesterday, token)
+    msg_previous = f"auth:{email.lower()}:{previous_window}".encode('utf-8')
+    sig_previous = hmac.new(secret, msg_previous, hashlib.sha256).hexdigest()
+    return secrets.compare_digest(sig_previous, token)
 
 
 def send_auth_email(to_email: str, token: str):
