@@ -42,33 +42,6 @@ client = MongoClient(os.getenv("MONGO_URL"))
 db = client["perfumehub_db"]
 collection = db["prices"]
 
-db_fragrantica = client["fragrantica_db"]
-collection_frag_data = db_fragrantica["fragrantica_dataset"]
-
-@app.get("/autocomplete")
-@limiter.limit("60/minute")
-def autocomplete(request: Request, q: str = ""):
-    if len(q) < 2:
-        return {"results": []}
-    
-    words = q.strip().split()
-    
-    and_conditions = []
-    for word in words:
-        and_conditions.append({
-            "$or": [
-                {"Perfume": {"$regex": word, "$options": "i"}},
-                {"Brand": {"$regex": word, "$options": "i"}}
-            ]
-        })
-        
-    results = list(collection_frag_data.find(
-        {"$and": and_conditions},
-        {"_id": 0, "url": 1, "Perfume": 1, "Brand": 1}
-    ).limit(10))
-    
-    return {"results": results}
-
 
 def validate_perfumehub_url(url: str) -> str:
     if not url.startswith(("http://", "https://")):
