@@ -20,7 +20,6 @@ def test_search():
     assert data["url"] != ""
     assert data["fragrance"] != ""
 
-
 def test_search_invalid_domain():
     wrong_params = {"url": "https://allegro.pl/dior/sauvage"}
     response = client.get("/search", params=wrong_params)
