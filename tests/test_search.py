@@ -41,7 +41,7 @@ def test_search_invalid_path():
     assert response.status_code == 500
     assert response.json()["detail"].lower() == "An error occurred while fetching the price.".lower()
 
-def test_search_no_url():
+def test_search_empty_url():
     wrong_params = {"url": ""}
     response = client.get("/search", params=wrong_params)
 
