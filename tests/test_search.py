@@ -1,14 +1,4 @@
-from fastapi.testclient import TestClient
-from main import app
-import pytest
-
-client = TestClient(app)
-
-@pytest.fixture(autouse=True)
-def reset_rate_limiter():
-    app.state.limiter.reset()
-
-def test_search():
+def test_search(client):
     params = {"url": "https://perfumehub.pl/dior-sauvage-woda-toaletowa-dla-mezczyzn-100-ml"}
     response = client.get("/search", params=params)
 
@@ -20,35 +10,35 @@ def test_search():
     assert data["url"] != ""
     assert data["fragrance"] != ""
 
-def test_search_invalid_domain():
+def test_search_invalid_domain(client):
     wrong_params = {"url": "https://allegro.pl/dior/sauvage"}
     response = client.get("/search", params=wrong_params)
 
     assert response.status_code == 400
     assert response.json()["detail"].lower() == "Invalid domain. Only official Perfumehub URLs are allowed.".lower()
 
-def test_search_malformed_url():
+def test_search_malformed_url(client):
     wrong_params = {"url": "https://[::1/some-perfumes"}
     response = client.get("/search", params=wrong_params)
 
     assert response.status_code == 400
     assert response.json()["detail"] == "Malformed URL provided."
 
-def test_search_invalid_path():
+def test_search_invalid_path(client):
     wrong_params = {"url": "perfumehub.pl/fake/perfume/path"}
     response = client.get("/search", params=wrong_params)
 
     assert response.status_code == 500
     assert response.json()["detail"].lower() == "An error occurred while fetching the price.".lower()
 
-def test_search_empty_url():
+def test_search_no_url(client):
     wrong_params = {"url": ""}
     response = client.get("/search", params=wrong_params)
 
     assert response.status_code == 400
     assert response.json()["detail"].lower() == "Invalid domain. Only official Perfumehub URLs are allowed.".lower()
 
-def test_search_limit_exceeded():
+def test_search_limit_exceeded(client):
     params = {"url": "https://perfumehub.pl/dior-sauvage-woda-toaletowa-dla-mezczyzn-100-ml"}
     response = client.get("/search", params=params)
     assert response.status_code == 200
