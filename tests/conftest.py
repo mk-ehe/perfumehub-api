@@ -9,3 +9,4 @@ def client():
 @pytest.fixture(autouse=True)
 def reset_rate_limiter():
     app.state.limiter.reset()
+    
