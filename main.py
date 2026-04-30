@@ -42,6 +42,21 @@ client = MongoClient(os.getenv("MONGO_URL"))
 db = client["perfumehub_db"]
 collection = db["prices"]
 
+@app.get("/")
+def guide():
+    return {
+        "routes": [
+            "[GET] /docs",
+            "[GET] /search?url={full_url}",
+            "[GET] /subscribe?url={full_url}&email={your_email}&token={token}",
+            "[GET] /cron-check?token={your_custom_token}",
+            "[GET] /ping",
+            "[POST] /unsubscribe (requires JSON body: {'url': '{full_url}', 'email': '{your_email}', 'token': {token}})"
+        ],
+        "author": "mk-ehe",
+        "github": "https://github.com/mk-ehe/perfumehub_api"
+        }
+
 
 def validate_perfumehub_url(url: str) -> str:
     if not url.startswith(("http://", "https://")):
@@ -62,21 +77,6 @@ def validate_perfumehub_url(url: str) -> str:
     except Exception as e:
         print(f"URL Validation Error: {e}", flush=True)
         raise HTTPException(status_code=400, detail="Malformed URL provided.")
-
-@app.get("/")
-def guide():
-    return {
-        "routes": [
-            "[GET] /docs",
-            "[GET] /search?url={full_url}",
-            "[GET] /subscribe?url={full_url}&email={your_email}&token={token}",
-            "[GET] /cron-check?token={your_custom_token}",
-            "[GET] /ping",
-            "[POST] /unsubscribe (requires JSON body: {'url': '{full_url}', 'email': '{your_email}', 'token': {token}})"
-        ],
-        "author": "mk-ehe",
-        "github": "https://github.com/mk-ehe/perfumehub_api"
-        }
 
 @app.get("/search")
 @limiter.limit("1/second, 15/minute")
