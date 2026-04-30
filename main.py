@@ -57,16 +57,12 @@ def guide():
         "github": "https://github.com/mk-ehe/perfumehub_api"
         }
 
-
 def validate_perfumehub_url(url: str) -> str:
     if not url.startswith(("http://", "https://")):
         url = "https://" + url
 
     try:
         parsed_url = urlparse(url)
-        if parsed_url.scheme not in ["http", "https"]:
-            raise HTTPException(status_code=400, detail="Invalid protocol.")
-
         domain_pattern = r"^(www\.)?perfumehub\.pl$"
         if not re.match(domain_pattern, parsed_url.netloc):
             raise HTTPException(status_code=400, detail="Invalid domain. Only official Perfumehub URLs are allowed.")
