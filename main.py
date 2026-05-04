@@ -42,6 +42,7 @@ client = MongoClient(os.getenv("MONGO_URL"))
 db = client["perfumehub_db"]
 collection = db["prices"]
 
+
 @app.get("/")
 def guide():
     return {
@@ -56,6 +57,7 @@ def guide():
         "author": "mk-ehe",
         "github": "https://github.com/mk-ehe/perfumehub_api"
         }
+
 
 def validate_perfumehub_url(url: str) -> str:
     if not url.startswith(("http://", "https://")):
@@ -111,6 +113,7 @@ def get_price(request: Request, url: str):
         print(f"ERROR: {str(e)}, route: /search", flush=True)
         raise HTTPException(status_code=500, detail="An error occurred while fetching the price.")
 
+
 class SubscribeRequest(BaseModel):
     url: str
     email: EmailStr
@@ -151,13 +154,14 @@ def subscribe_price(request: Request, payload: SubscribeRequest):
             "subscribers": [email_lower]
         }
         collection.insert_one(db_document)
-        print(f"INFO: {email_lower} subscribed to: {db_document["fragrance"]}!", flush=True)
+        print(f"INFO: {email_lower} subscribed to: {db_document['fragrance']}!", flush=True)
         return {"message": "Fragrance successfully added to your alerts!"}
     except HTTPException:
         raise
     except Exception as e:
         print(f"ERROR: {e}, route: /subscribe", flush=True)
         raise HTTPException(status_code=400, detail="Error while fetching data.")
+
 
 class UnsubscribeRequest(BaseModel):
     url: str
@@ -185,6 +189,7 @@ def unsubscribe_price(request: Request, data: UnsubscribeRequest):
 
     return {"message": f"Success! {data.email} has been unsubscribed from alerts for this product."}
 
+
 class AuthRequest(BaseModel):
     email: EmailStr
 
@@ -196,6 +201,7 @@ def request_access(request: Request, data: AuthRequest, background_tasks: Backgr
     background_tasks.add_task(send_auth_email, email_lower, token)
     print(f"Access link has been sent to {email_lower}.", flush=True)
     return {"message": "Access link has been sent to your e-mail."}
+
 
 @app.get("/my-alerts")
 @limiter.limit("30/minute")
@@ -209,6 +215,7 @@ def get_my_alerts(request: Request, email: str, token: str):
         {"_id": 0, "fragrance": 1, "picture": 1, "price": 1, "low_30d": 1, "url": 1}
     ).sort("fragrance", 1))
     return {"alerts": user_perfumes}
+
 
 def parse_price(price_str: str) -> float:
     if not price_str:
@@ -327,6 +334,7 @@ def run_price_checks(background_tasks: BackgroundTasks, token: str = ""):
 
     print("INFO: Cron check started.", flush=True)
     return {"message": "Cron check started."}
+
 
 @app.get("/ping")
 @limiter.limit("20/minute")

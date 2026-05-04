@@ -4,3 +4,4 @@ __pycache__/
 .vscode
 token.json
 credentials.json
+.pytest_cache

@@ -5,11 +5,13 @@ def test_guide(client):
     assert response.json()["author"] == "mk-ehe"
     assert "routes" in response.json()
 
+
 def test_ping(client):
     response = client.get("/ping")
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
 
 def test_ping_limit_exceeded(client):
     for _ in range(20):

@@ -18,6 +18,7 @@ load_dotenv()
 
 WINDOW_SECONDS = 1 * 3600
 
+
 def get_gmail_service():
     token_data = os.getenv("GMAIL_TOKEN_JSON")
     
@@ -31,6 +32,7 @@ def get_gmail_service():
 
     return build('gmail', 'v1', credentials=creds)
 
+
 def generate_unsubscribe_token(email: str, url: str) -> str:
     secret = os.getenv("UNSUB_SECRET").encode('utf-8')
     message = f"{email.lower()}:{url}".encode('utf-8')
@@ -41,6 +43,7 @@ def verify_unsubscribe_token(email: str, url: str, token: str) -> bool:
     expected_token = generate_unsubscribe_token(email, url)
     return secrets.compare_digest(expected_token, token)
 
+
 def send_via_api(message_object):
     service = get_gmail_service()
     encoded_message = base64.urlsafe_b64encode(message_object.as_bytes()).decode()
@@ -48,6 +51,7 @@ def send_via_api(message_object):
     
     send_message = service.users().messages().send(userId="me", body=create_message).execute()
     return send_message
+
 
 def send_price_alert(to_email: str, fragrance_name: str, picture: str, old_price: str, new_price: str, price_diff: str, low_30d: str, product_url: str, shop_url: str):
     gmail_address = os.getenv("GMAIL_ADDRESS")
@@ -239,3 +243,4 @@ def send_auth_email(to_email: str, token: str):
     except Exception as e:
         print(f"INFO: Error while sending auth e-mail to: {to_email}: {e}", flush=True)
         return False
+    
