@@ -87,6 +87,8 @@ def get_price(request: Request, url: str):
     
     try:
         scraped_data = scraper.get_data(url)
+        if not scraped_data.get("fragrance") or not scraped_data.get("price"):
+            raise HTTPException(status_code=400, detail="Invalid URL or product not found.")
         
         db_document = {
             "fragrance": scraped_data.get("fragrance"),
@@ -99,11 +101,12 @@ def get_price(request: Request, url: str):
             "subscribers": []
         }
 
-        collection.insert_one(db_document)
+        collection.insert_one(db_document) 
         db_document.pop("_id", None)
         db_document.pop("subscribers", None)
         return db_document
-
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"ERROR: {str(e)}, route: /search", flush=True)
         raise HTTPException(status_code=500, detail="An error occurred while fetching the price.")
@@ -135,7 +138,7 @@ def subscribe_price(request: Request, payload: SubscribeRequest):
     try:
         scraped_data = scraper.get_data(url)
         if not scraped_data.get("fragrance") or not scraped_data.get("price"):
-            raise ValueError("Invalid URL or product not found. Missing fragrance name or price.")
+            raise HTTPException(status_code=400, detail="Invalid URL or product not found.")
 
         db_document = {
             "fragrance": scraped_data.get("fragrance"),
@@ -150,6 +153,8 @@ def subscribe_price(request: Request, payload: SubscribeRequest):
         collection.insert_one(db_document)
         print(f"INFO: {email_lower} subscribed to: {db_document["fragrance"]}!", flush=True)
         return {"message": "Fragrance successfully added to your alerts!"}
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"ERROR: {e}, route: /subscribe", flush=True)
         raise HTTPException(status_code=400, detail="Error while fetching data.")
