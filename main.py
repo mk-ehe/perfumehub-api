@@ -48,9 +48,9 @@ def guide():
         "routes": [
             "[GET] /docs",
             "[GET] /search?url={full_url}",
-            "[GET] /subscribe?url={full_url}&email={your_email}&token={token}",
             "[GET] /cron-check?token={your_custom_token}",
             "[GET] /ping",
+            "[POST] /subscribe (requires JSON body: {'url': '{full_url}', 'email': '{your_email}', 'token': {token}})",
             "[POST] /unsubscribe (requires JSON body: {'url': '{full_url}', 'email': '{your_email}', 'token': {token}})"
         ],
         "author": "mk-ehe",
@@ -134,6 +134,9 @@ def subscribe_price(request: Request, payload: SubscribeRequest):
 
     try:
         scraped_data = scraper.get_data(url)
+        if not scraped_data.get("fragrance") or not scraped_data.get("price"):
+            raise ValueError("Invalid URL or product not found. Missing fragrance name or price.")
+
         db_document = {
             "fragrance": scraped_data.get("fragrance"),
             "concentration": scraped_data.get("concentration"),
