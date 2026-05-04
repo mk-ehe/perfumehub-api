@@ -108,13 +108,18 @@ def get_price(request: Request, url: str):
         print(f"ERROR: {str(e)}, route: /search", flush=True)
         raise HTTPException(status_code=500, detail="An error occurred while fetching the price.")
 
-@app.get("/subscribe")
-@limiter.limit("1/second, 10/minute, 40/hour")
-def subscribe_price(request: Request, url: str, email: EmailStr, token: str):
-    url = validate_perfumehub_url(url)
-    email_lower = email.lower()
+class SubscribeRequest(BaseModel):
+    url: str
+    email: EmailStr
+    token: str
 
-    if not verify_auth_token(email_lower, token):
+@app.post("/subscribe")
+@limiter.limit("1/second, 10/minute, 40/hour")
+def subscribe_price(request: Request, payload: SubscribeRequest):
+    url = validate_perfumehub_url(payload.url)
+    email_lower = payload.email.lower()
+
+    if not verify_auth_token(email_lower, payload.token):
         raise HTTPException(status_code=403, detail="Unauthorized.")
 
     product_exists = collection.find_one({"url": url})
