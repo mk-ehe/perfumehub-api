@@ -120,7 +120,7 @@ class SubscribeRequest(BaseModel):
     token: str
 
 @app.post("/subscribe")
-@limiter.limit("1/second, 10/minute, 40/hour")
+@limiter.limit("1/second, 15/minute, 40/hour")
 def subscribe_price(request: Request, payload: SubscribeRequest):
     url = validate_perfumehub_url(payload.url)
     email_lower = payload.email.lower()
@@ -169,7 +169,7 @@ class UnsubscribeRequest(BaseModel):
     token: str
 
 @app.post("/unsubscribe")
-@limiter.limit("40/hour")
+@limiter.limit("3/second, 15/minute, 40/hour")
 def unsubscribe_price(request: Request, data: UnsubscribeRequest):
     valid_url = validate_perfumehub_url(data.url)
 
