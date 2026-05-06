@@ -172,7 +172,8 @@ def unsubscribe_price(request: Request, data: UnsubscribeRequest):
     if result.modified_count == 0:
         return {"message": "You were not subscribed to this fragrance."}
 
-    return {"message": f"Success! {data.email} has been unsubscribed from alerts for this product."}
+    print(f"INFO: {data.email.lower()} unsubscribed a fragrance: {data.url}", flush=True)
+    return {"message": "Success! Your e-mail has been unsubscribed from alerts for this product."}
 
 
 class AuthRequest(BaseModel):
@@ -184,6 +185,7 @@ def request_access(request: Request, data: AuthRequest, background_tasks: Backgr
     email_lower = data.email.lower()
     token = generate_auth_token(email_lower)
     background_tasks.add_task(send_auth_email, email_lower, token)
+    
     print(f"Access link has been sent to {email_lower}.", flush=True)
     return {"message": "Access link has been sent to your e-mail."}
 
