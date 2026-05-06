@@ -33,8 +33,8 @@ A high-performance price tracking and notification engine for fragrances, built 
 Fetches current fragrance data and synchronizes it with the MongoDB database.
 
 ### 2. Subscribe to Alerts
-`GET /subscribe?url={full_url}&email={your_email}&token={token}`
-Registers an email address for price-drop notifications on a specific product.
+`POST /subscribe`
+Registers an email for price-drop notifications. Requires a JSON body: `{"url": "...", "email": "...", "token": "..."}`.
 
 ### 3. Unsubscribe
 `POST /unsubscribe`
