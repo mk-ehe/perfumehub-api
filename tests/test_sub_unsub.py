@@ -19,51 +19,51 @@ def test_subscribe_invalid_email_format(client):
 
 
 def test_subscribe_case_insensitivity(client):
-    test_url = "https://perfumehub.pl/test-case-insensitivity"
-    test_email = "Kontakt.Mateusz.Kudas@gmail.com"
+    url = "https://perfumehub.pl/test-case-insensitivity"
+    email = "Kontakt.Mateusz.Kudas@gmail.com"
     expected_email_in_db = "kontakt.mateusz.kudas@gmail.com"
     token = generate_auth_token(expected_email_in_db)
 
-    collection.delete_one({"url": test_url})
+    collection.delete_one({"url": url})
     collection.insert_one({
         "fragrance": "Krystian Dijor",
         "price": "100 zł",
-        "url": test_url,
+        "url": url,
         "subscribers": ["random.user@gmail.com"]
     })
 
     payload = {
-        "url": test_url,
-        "email": test_email,
+        "url": url,
+        "email": email,
         "token": token
     }
 
     response = client.post("/subscribe", json=payload)
     assert response.status_code == 200
 
-    saved_product = collection.find_one({"url": test_url})
+    saved_product = collection.find_one({"url": url})
     assert expected_email_in_db in saved_product["subscribers"]
-    assert test_email not in saved_product["subscribers"]
+    assert email not in saved_product["subscribers"]
     
-    collection.delete_one({"url": test_url})
+    collection.delete_one({"url": url})
 
 
 def test_subscribe_added_no_scraper(client):
-    test_url = "https://perfumehub.pl/no-scraper-test"
-    test_email = "kontakt.mateusz.kudas@gmail.com"
-    token = generate_auth_token(test_email)
+    url = "https://perfumehub.pl/no-scraper-test"
+    email = "kontakt.mateusz.kudas@gmail.com"
+    token = generate_auth_token(email)
 
-    collection.delete_one({"url": test_url})
+    collection.delete_one({"url": url})
     collection.insert_one({
         "fragrance": "Krystian Dijor",
         "price": "100 zł",
-        "url": test_url,
+        "url": url,
         "subscribers": ["random.user@gmail.com"]
     })
 
     payload = {
-        "url": test_url,
-        "email": test_email,
+        "url": url,
+        "email": email,
         "token": token
     }
 
@@ -71,41 +71,41 @@ def test_subscribe_added_no_scraper(client):
     assert response.status_code == 200
     assert response.json()["message"] == "Fragrance successfully added to your alerts!"
     
-    collection.delete_one({"url": test_url})
+    collection.delete_one({"url": url})
 
 
 def test_subscribe_added_w_scraper(client, backup_and_restore_perfume):
-    test_url = "https://perfumehub.pl/versace-eros-woda-perfumowana-dla-mezczyzn-200-ml"
-    test_email = "kontakt.mateusz.kudas@gmail.com"
-    token = generate_auth_token(test_email)
+    url = "https://perfumehub.pl/versace-eros-woda-perfumowana-dla-mezczyzn-200-ml"
+    email = "kontakt.mateusz.kudas@gmail.com"
+    token = generate_auth_token(email)
 
     payload = {
-        "url": test_url,
-        "email": test_email,
+        "url": url,
+        "email": email,
         "token": token
     }
 
-    collection.delete_one({"url": test_url})
+    collection.delete_one({"url": url})
 
     response = client.post("/subscribe", json=payload)
     assert response.status_code == 200
     assert response.json()["message"] == "Fragrance successfully added to your alerts!"
 
-    saved_product = collection.find_one({"url": test_url})
+    saved_product = collection.find_one({"url": url})
     assert saved_product is not None
-    assert test_email in saved_product["subscribers"]
+    assert email in saved_product["subscribers"]
     assert "fragrance" in saved_product
     assert saved_product["price"] is not None
 
 
 def test_subscribe_already_exists(client):
-    test_url = "https://perfumehub.pl/versace-eros-woda-perfumowana-dla-mezczyzn-200-ml"
-    test_email = "kontakt.mateusz.kudas@gmail.com"
-    token = generate_auth_token(test_email)
+    url = "https://perfumehub.pl/versace-eros-woda-perfumowana-dla-mezczyzn-200-ml"
+    email = "kontakt.mateusz.kudas@gmail.com"
+    token = generate_auth_token(email)
 
     payload = {
-        "url": test_url,
-        "email": test_email,
+        "url": url,
+        "email": email,
         "token": token
     }
     client.post("/unsubscribe", json=payload)
@@ -119,13 +119,13 @@ def test_subscribe_already_exists(client):
 
 
 def test_subscribe_unauthorized(client):
-    test_url = "https://perfumehub.pl/versace-eros-woda-perfumowana-dla-mezczyzn-200-ml"
-    test_email = "kontakt.mateusz.kudas@gmail.com"
+    url = "https://perfumehub.pl/versace-eros-woda-perfumowana-dla-mezczyzn-200-ml"
+    email = "kontakt.mateusz.kudas@gmail.com"
     token = "fake_token_iaF2gA63GasWr1"
 
     payload = {
-        "url": test_url,
-        "email": test_email,
+        "url": url,
+        "email": email,
         "token": token
     }
 
@@ -135,13 +135,13 @@ def test_subscribe_unauthorized(client):
 
 
 def test_subscribe_invalid_url(client):
-    test_url = "https://allegro.pl/fake/perfume/path"
-    test_email = "kontakt.mateusz.kudas@gmail.com"
-    token = generate_auth_token(test_email)
+    url = "https://allegro.pl/fake/perfume/path"
+    email = "kontakt.mateusz.kudas@gmail.com"
+    token = generate_auth_token(email)
 
     payload = {
-        "url": test_url,
-        "email": test_email,
+        "url": url,
+        "email": email,
         "token": token
     }
     
@@ -151,13 +151,13 @@ def test_subscribe_invalid_url(client):
 
 
 def test_subscribe_valid_url_invalid_path(client):
-    test_url = "https://perfumehub.pl/?cat=perfumes&sort=best-deals-desc&showPromoCodes=false&showForeignShops=false&hideDecants=false"
-    test_email = "kontakt.mateusz.kudas@gmail.com"
-    token = generate_auth_token(test_email)
+    url = "https://perfumehub.pl/?cat=perfumes&sort=best-deals-desc&showPromoCodes=false&showForeignShops=false&hideDecants=false"
+    email = "kontakt.mateusz.kudas@gmail.com"
+    token = generate_auth_token(email)
 
     payload = {
-        "url": test_url,
-        "email": test_email,
+        "url": url,
+        "email": email,
         "token": token
     }
     
@@ -167,13 +167,13 @@ def test_subscribe_valid_url_invalid_path(client):
 
 
 def test_subscribe_malformed_url(client):
-    test_url = "https://[::1/some-perfumes"
-    test_email = "kontakt.mateusz.kudas@gmail.com"
-    token = generate_auth_token(test_email)
+    url = "https://[::1/some-perfumes"
+    email = "kontakt.mateusz.kudas@gmail.com"
+    token = generate_auth_token(email)
 
     payload = {
-        "url": test_url,
-        "email": test_email,
+        "url": url,
+        "email": email,
         "token": token
     }
     
@@ -183,13 +183,13 @@ def test_subscribe_malformed_url(client):
 
 
 def test_subscribe_limit_exceeded(client):
-    test_url = "https://perfumehub.pl/versace-eros-woda-perfumowana-dla-mezczyzn-200-ml"
-    test_email = "kontakt.mateusz.kudas@gmail.com"
-    token = generate_auth_token(test_email)
+    url = "https://perfumehub.pl/versace-eros-woda-perfumowana-dla-mezczyzn-200-ml"
+    email = "kontakt.mateusz.kudas@gmail.com"
+    token = generate_auth_token(email)
 
     payload = {
-        "url": test_url,
-        "email": test_email,
+        "url": url,
+        "email": email,
         "token": token
     }
 
@@ -202,13 +202,13 @@ def test_subscribe_limit_exceeded(client):
 
 
 def test_unsubscribe_auth_token(client):
-    test_url = "https://perfumehub.pl/versace-eros-woda-perfumowana-dla-mezczyzn-200-ml"
-    test_email = "kontakt.mateusz.kudas@gmail.com"
-    token = generate_auth_token(test_email)
+    url = "https://perfumehub.pl/versace-eros-woda-perfumowana-dla-mezczyzn-200-ml"
+    email = "kontakt.mateusz.kudas@gmail.com"
+    token = generate_auth_token(email)
 
     payload = {
-        "url": test_url,
-        "email": test_email,
+        "url": url,
+        "email": email,
         "token": token
     }
     
@@ -216,35 +216,35 @@ def test_unsubscribe_auth_token(client):
 
     response = client.post("/unsubscribe", json=payload)
     assert response.status_code == 200
-    assert response.json()["message"] == f"Success! {test_email} has been unsubscribed from alerts for this product."
+    assert response.json()["message"] == f"Success! {email} has been unsubscribed from alerts for this product."
 
 
 def test_unsubscribe_unsub_token(client):
-    test_url = "https://perfumehub.pl/versace-eros-woda-perfumowana-dla-mezczyzn-200-ml"
-    test_email = "kontakt.mateusz.kudas@gmail.com"
-    auth_token = generate_auth_token(test_email)
-    client.post("/subscribe", json={"url": test_url, "email": test_email, "token": auth_token})
+    url = "https://perfumehub.pl/versace-eros-woda-perfumowana-dla-mezczyzn-200-ml"
+    email = "kontakt.mateusz.kudas@gmail.com"
+    auth_token = generate_auth_token(email)
+    client.post("/subscribe", json={"url": url, "email": email, "token": auth_token})
 
-    unsub_token = generate_unsubscribe_token(test_email, test_url)
+    unsub_token = generate_unsubscribe_token(email, url)
     payload = {
-        "url": test_url,
-        "email": test_email,
+        "url": url,
+        "email": email,
         "token": unsub_token
     }
 
     response = client.post("/unsubscribe", json=payload)
     assert response.status_code == 200
-    assert response.json()["message"] == f"Success! {test_email} has been unsubscribed from alerts for this product."
+    assert response.json()["message"] == f"Success! {email} has been unsubscribed from alerts for this product."
 
 
 def test_unsubscribe_unsub_not_existing(client):
-    test_url = "https://perfumehub.pl/versace-eros-woda-perfumowana-dla-mezczyzn-200-ml"
-    test_email = "kontakt.mateusz.kudas@gmail.com"
-    token = generate_auth_token(test_email)
+    url = "https://perfumehub.pl/versace-eros-woda-perfumowana-dla-mezczyzn-200-ml"
+    email = "kontakt.mateusz.kudas@gmail.com"
+    token = generate_auth_token(email)
 
     payload = {
-        "url": test_url,
-        "email": test_email,
+        "url": url,
+        "email": email,
         "token": token
     }
 
@@ -253,17 +253,17 @@ def test_unsubscribe_unsub_not_existing(client):
     response = client.post("/unsubscribe", json=payload)
     assert response.status_code == 200
     assert response.json()["message"] == "You were not subscribed to this fragrance."
-    assert test_email not in collection.find_one({"url": test_url})["subscribers"]
+    assert email not in collection.find_one({"url": url})["subscribers"]
 
 
 def test_unsubscribe_unauthorized(client):
-    test_url = "https://perfumehub.pl/versace-eros-woda-perfumowana-dla-mezczyzn-200-ml"
-    test_email = "kontakt.mateusz.kudas@gmail.com"
+    url = "https://perfumehub.pl/versace-eros-woda-perfumowana-dla-mezczyzn-200-ml"
+    email = "kontakt.mateusz.kudas@gmail.com"
     token = "fake_token_iaF2gA63GasWr1"
 
     payload = {
-        "url": test_url,
-        "email": test_email,
+        "url": url,
+        "email": email,
         "token": token
     }
 
@@ -273,13 +273,13 @@ def test_unsubscribe_unauthorized(client):
 
 
 def test_unsubscribe_invalid_url(client):
-    test_url = "https://allegro.pl/fake/perfume/path"
-    test_email = "kontakt.mateusz.kudas@gmail.com"
-    token = generate_auth_token(test_email)
+    url = "https://allegro.pl/fake/perfume/path"
+    email = "kontakt.mateusz.kudas@gmail.com"
+    token = generate_auth_token(email)
 
     payload = {
-        "url": test_url,
-        "email": test_email,
+        "url": url,
+        "email": email,
         "token": token
     }
     
@@ -289,13 +289,13 @@ def test_unsubscribe_invalid_url(client):
 
 
 def test_unsubscribe_valid_url_invalid_path(client):
-    test_url = "https://perfumehub.pl/?cat=perfumes&sort=best-deals-desc&showPromoCodes=false&showForeignShops=false&hideDecants=false"
-    test_email = "kontakt.mateusz.kudas@gmail.com"
-    token = generate_auth_token(test_email)
+    url = "https://perfumehub.pl/?cat=perfumes&sort=best-deals-desc&showPromoCodes=false&showForeignShops=false&hideDecants=false"
+    email = "kontakt.mateusz.kudas@gmail.com"
+    token = generate_auth_token(email)
 
     payload = {
-        "url": test_url,
-        "email": test_email,
+        "url": url,
+        "email": email,
         "token": token
     }
     
@@ -305,13 +305,13 @@ def test_unsubscribe_valid_url_invalid_path(client):
 
 
 def test_unsubscribe_malformed_url(client):
-    test_url = "https://[::1/some-perfumes"
-    test_email = "kontakt.mateusz.kudas@gmail.com"
-    token = generate_auth_token(test_email)
+    url = "https://[::1/some-perfumes"
+    email = "kontakt.mateusz.kudas@gmail.com"
+    token = generate_auth_token(email)
 
     payload = {
-        "url": test_url,
-        "email": test_email,
+        "url": url,
+        "email": email,
         "token": token
     }
     
@@ -321,13 +321,13 @@ def test_unsubscribe_malformed_url(client):
 
 
 def test_unsubscribe_limit_exceeded(client):
-    test_url = "https://perfumehub.pl/versace-eros-woda-perfumowana-dla-mezczyzn-200-ml"
-    test_email = "kontakt.mateusz.kudas@gmail.com"
-    token = generate_auth_token(test_email)
+    url = "https://perfumehub.pl/versace-eros-woda-perfumowana-dla-mezczyzn-200-ml"
+    email = "kontakt.mateusz.kudas@gmail.com"
+    token = generate_auth_token(email)
 
     payload = {
-        "url": test_url,
-        "email": test_email,
+        "url": url,
+        "email": email,
         "token": token
     }
 
