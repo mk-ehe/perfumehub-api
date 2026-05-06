@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Request, Header
 from scraper import PerfumehubScraper   
 from dotenv import load_dotenv
 import re
@@ -309,10 +309,10 @@ def process_all_prices():
 
     print("INFO: Cron check completed.", flush=True)
 
-@app.get("/cron-check")
-def run_price_checks(background_tasks: BackgroundTasks, token: str = ""):
+@app.post("/cron-check")
+def run_price_checks(background_tasks: BackgroundTasks, x_cron_secret: str = Header(None)):
     expected_token = os.getenv("CRON_SECRET")
-    if not secrets.compare_digest(token, expected_token or ""):
+    if not x_cron_secret or not secrets.compare_digest(x_cron_secret, expected_token or ""):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     background_tasks.add_task(process_all_prices)
