@@ -59,6 +59,35 @@ def guide():
         }
 
 
+def fetch_scraper_data(url: str, email: str = None, source_route: str = "unknown") -> dict:
+    try:
+        scraped_data = scraper.get_data(url)
+        if not scraped_data.get("fragrance") or not scraped_data.get("price"):
+            raise HTTPException(status_code=400, detail="Invalid URL or product not found.")
+        
+        subscribers_list = [email] if email else []
+
+        db_document = {
+            "fragrance": scraped_data.get("fragrance"),
+            "concentration": scraped_data.get("concentration"),
+            "picture": scraped_data.get("picture"),
+            "price": scraped_data.get("price"),
+            "low_30d": scraped_data.get("low_30d"),
+            "shop": scraped_data.get("shop"),
+            "url": url,
+            "subscribers": subscribers_list
+        }
+
+        collection.insert_one(db_document) 
+        db_document.pop("_id", None)
+        db_document.pop("subscribers", None)
+        return db_document
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"ERROR: {str(e)}, route: {source_route}", flush=True)
+        raise HTTPException(status_code=500, detail="An error occurred while fetching the price.")
+
 def validate_perfumehub_url(url: str) -> str:
     if not url.startswith(("http://", "https://")):
         url = "https://" + url
@@ -68,7 +97,7 @@ def validate_perfumehub_url(url: str) -> str:
         domain_pattern = r"^(www\.)?perfumehub\.pl$"
         if not re.match(domain_pattern, parsed_url.netloc):
             raise HTTPException(status_code=400, detail="Invalid domain. Only official Perfumehub URLs are allowed.")
-
+        
         return url
     except HTTPException:
         raise
@@ -87,31 +116,7 @@ def get_price(request: Request, url: str):
         existing_product.pop("subscribers", None)
         return existing_product
     
-    try:
-        scraped_data = scraper.get_data(url)
-        if not scraped_data.get("fragrance") or not scraped_data.get("price"):
-            raise HTTPException(status_code=400, detail="Invalid URL or product not found.")
-        
-        db_document = {
-            "fragrance": scraped_data.get("fragrance"),
-            "concentration": scraped_data.get("concentration"),
-            "picture": scraped_data.get("picture"),
-            "price": scraped_data.get("price"),
-            "low_30d": scraped_data.get("low_30d"),
-            "shop": scraped_data.get("shop"),
-            "url": url,
-            "subscribers": []
-        }
-
-        collection.insert_one(db_document) 
-        db_document.pop("_id", None)
-        db_document.pop("subscribers", None)
-        return db_document
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"ERROR: {str(e)}, route: /search", flush=True)
-        raise HTTPException(status_code=500, detail="An error occurred while fetching the price.")
+    return fetch_scraper_data(url=url, source_route="/search")
 
 
 class SubscribeRequest(BaseModel):
@@ -138,29 +143,9 @@ def subscribe_price(request: Request, payload: SubscribeRequest):
         print(f"INFO: {email_lower} subscribed to: {product_exists.get("fragrance")}!", flush=True)
         return {"message": "Fragrance successfully added to your alerts!"}
 
-    try:
-        scraped_data = scraper.get_data(url)
-        if not scraped_data.get("fragrance") or not scraped_data.get("price"):
-            raise HTTPException(status_code=400, detail="Invalid URL or product not found.")
-
-        db_document = {
-            "fragrance": scraped_data.get("fragrance"),
-            "concentration": scraped_data.get("concentration"),
-            "picture": scraped_data.get("picture"),
-            "price": scraped_data.get("price"),
-            "low_30d": scraped_data.get("low_30d"),
-            "shop": scraped_data.get("shop"),
-            "url": url,
-            "subscribers": [email_lower]
-        }
-        collection.insert_one(db_document)
-        print(f"INFO: {email_lower} subscribed to: {db_document['fragrance']}!", flush=True)
-        return {"message": "Fragrance successfully added to your alerts!"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"ERROR: {e}, route: /subscribe", flush=True)
-        raise HTTPException(status_code=400, detail="Error while fetching data.")
+    new_product = fetch_scraper_data(url=url, email=email_lower, source_route="/subscribe")
+    print(f"INFO: {email_lower} subscribed to: {new_product.get('fragrance')}!", flush=True)
+    return {"message": "Fragrance successfully added to your alerts!"}
 
 
 class UnsubscribeRequest(BaseModel):
