@@ -1,4 +1,4 @@
-from email_sender import generate_auth_token, generate_unsubscribe_token
+from email_sender import generate_auth_token
 from time import sleep
 from main import collection
 
