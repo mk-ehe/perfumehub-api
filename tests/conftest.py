@@ -15,15 +15,13 @@ def reset_rate_limiter():
 
 @pytest.fixture
 def backup_and_restore_perfume():
-    test_url = "https://perfumehub.pl/versace-eros-woda-perfumowana-dla-mezczyzn-200-ml"
+    url = "https://perfumehub.pl/versace-eros-woda-perfumowana-dla-mezczyzn-200-ml"
     
-    existing_document = collection.find_one({"url": test_url})
-    
-    collection.delete_one({"url": test_url})
+    existing_document = collection.find_one({"url": url})
     
     yield 
     
-    collection.delete_one({"url": test_url})
+    collection.delete_one({"url": url})
     
     if existing_document:
         collection.insert_one(existing_document)
