@@ -72,6 +72,7 @@ def fetch_scraper_data(url: str, email: str = None, source_route: str = "unknown
             "concentration": scraped_data.get("concentration"),
             "picture": scraped_data.get("picture"),
             "price": scraped_data.get("price"),
+            "capacity": scraped_data.get("capacity"),
             "low_30d": scraped_data.get("low_30d"),
             "shop": scraped_data.get("shop"),
             "url": url,
@@ -199,7 +200,7 @@ def get_my_alerts(request: Request, email: str, token: str):
     
     user_perfumes = list(collection.find(
         {"subscribers": email_lower},
-        {"_id": 0, "fragrance": 1, "picture": 1, "price": 1, "low_30d": 1, "url": 1}
+        {"_id": 0, "fragrance": 1, "picture": 1, "price": 1, "capacity": 1, "low_30d": 1, "url": 1}
     ).sort("fragrance", 1))
     return {"alerts": user_perfumes}
 
@@ -258,7 +259,8 @@ def process_all_prices():
             
             set_fields = {
                 "low_30d": low_30d,
-                "shop": shop_data
+                "shop": shop_data,
+                "capacity": scraped_data.get("capacity")
             }
 
             new_picture = scraped_data.get("picture")
