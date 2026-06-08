@@ -29,7 +29,8 @@ class PerfumehubScraper:
     
     def get_first_or_none(self, tree, xpath_query):
         result = tree.xpath(xpath_query)
-        return result[0].strip() if result else None
+        if result:
+            return " ".join(result[0].split())
 
     def decode_perfumehub_link(self, raw_url):
         if not raw_url or not raw_url.startswith("/click?t="):
@@ -67,12 +68,14 @@ class PerfumehubScraper:
         low_30d = self.get_first_or_none(tree, '//*[@id="offers-header"]/div[3]/div[1]/span/span/span[4]/text()')
         shop_name = self.get_first_or_none(tree, '//*[@id="offers-body"]/div[1]/div[1]/a/text()')
         raw_shop_url = self.get_first_or_none(tree, '//*[@id="offers-body"]/div[1]/div[1]/a/@href')
+        capacity = self.get_first_or_none(tree, '//*[@id="product-description"]/div[2]/div[2]/div//a[contains(@class, "active")]/div/text()')
 
         data = {
             "fragrance": fragrance,
             "concentration": concetration,
             "picture": picture,
             "price": price,
+            "capacity": capacity,
             "low_30d": f"{low_30d} zł" if low_30d else None,
             "shop": {
                 "name": shop_name,

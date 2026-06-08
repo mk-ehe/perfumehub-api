@@ -52,7 +52,7 @@ def send_via_api(message_object):
     return send_message
 
 
-def send_price_alert(to_email: str, fragrance_name: str, picture: str, old_price: str, new_price: str, price_diff: str, low_30d: str, product_url: str, shop_url: str):
+def send_price_alert(to_email: str, fragrance_name: str, picture: str, capacity: str, old_price: str, new_price: str, price_diff: str, low_30d: str, product_url: str, shop_url: str):
     gmail_address = os.getenv("GMAIL_ADDRESS")
     frontend_url = os.getenv("FRONTEND_URL")
     safe_name = html.escape(fragrance_name)
@@ -66,7 +66,7 @@ def send_price_alert(to_email: str, fragrance_name: str, picture: str, old_price
         image_block = f'<a href="{product_url}"><img src="{picture}" style="max-width: 200px; max-height: 200px; object-fit: contain; display: block; border: none;"></a>'
 
     msg = EmailMessage()
-    msg['Subject'] = f"📉 Spadek ceny: {fragrance_name}!"
+    msg['Subject'] = f"📉 Spadek ceny: {fragrance_name} - {capacity}!"
     msg['From'] = f"ScentWatch <{gmail_address}>" 
     msg['To'] = to_email
 
