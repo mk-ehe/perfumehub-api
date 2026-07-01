@@ -233,6 +233,8 @@ def process_all_prices():
             scraped_data = scraper.get_data(url)
             new_price_str = scraped_data.get("price")
 
+            capacity = scraped_data.get("capacity") or ""
+
             low_30d = scraped_data.get("low_30d") or "Brak"
 
             shop_data = scraped_data.get("shop", {})
@@ -280,6 +282,7 @@ def process_all_prices():
                         to_email=email,
                         fragrance_name=fragrance_name,
                         picture=picture,
+                        capacity=capacity,
                         old_price=old_price_str,
                         new_price=new_price_str,
                         price_diff=formatted_diff,
