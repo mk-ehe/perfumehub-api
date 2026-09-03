@@ -329,6 +329,6 @@ def run_price_checks(background_tasks: BackgroundTasks, x_cron_secret: str = Hea
 
 
 @app.get("/ping")
-@limiter.limit("20/minute")
+@limiter.limit("60/minute")
 def ping(request: Request):
     return {"status": "ok"}
