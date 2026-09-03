@@ -14,7 +14,7 @@ def test_ping(client):
 
 
 def test_ping_limit_exceeded(client):
-    for _ in range(20):
+    for _ in range(60):
         response = client.get("/ping")
         assert response.status_code == 200
 
